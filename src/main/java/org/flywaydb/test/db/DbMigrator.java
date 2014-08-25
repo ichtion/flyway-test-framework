@@ -19,7 +19,7 @@ public class DbMigrator {
     // (the idea is to have a single instance of migrator per flyway configuration
     // Todo: make it multi-thread proof
     // resolve a problem with two different configurations pointing to the same DB
-    public static DbMigrator getMigratorForConfiguration(String flywayConfiguration) {
+    public static DbMigrator dbMigratorForConfiguration(String flywayConfiguration) {
         if (null != migrator) {
             return migrator;
         }

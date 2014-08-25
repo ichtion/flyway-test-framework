@@ -5,6 +5,6 @@ import org.flywaydb.test.runner.FlywayJUnitRunner;
 import org.junit.runner.RunWith;
 
 @RunWith(FlywayJUnitRunner.class)
-@FlywayMigrationTestSuite(packages = {"org.flywaydb.test"})
+@FlywayMigrationTestSuite(cleanDb = true, flywayConfiguration = "/flyway.properties", packages = {"org.flywaydb.test"})
 public class FlywayMigrationSuite  {
 }

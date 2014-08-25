@@ -5,6 +5,7 @@ import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.test.AbstractFlywayMigrationTest;
 import org.flywaydb.test.annotation.FlywayMigrationTest;
 import org.flywaydb.test.annotation.FlywayMigrationTestSuite;
+import org.flywaydb.test.db.DbMigrator;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
 import org.junit.runner.notification.RunNotifier;
@@ -19,9 +20,27 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
 
     public FlywayJUnitRunner(Class<?> clazz) throws InitializationError {
         super(clazz);
+        cleanDbIfNeededForFurtherExecutionOfClass(clazz);
         for (Class flywayTestClass : getFlywayTestClass(clazz)) {
             storeFlywayTest(flywayTestClass);
         }
+    }
+
+    private void cleanDbIfNeededForFurtherExecutionOfClass(Class<?> clazz) {
+        FlywayMigrationTestSuite flywayMigrationTestSuite = clazz.getAnnotation(FlywayMigrationTestSuite.class);
+        FlywayMigrationTest flywayMigrationTest = clazz.getAnnotation(FlywayMigrationTest.class);
+
+        if (null != flywayMigrationTestSuite && flywayMigrationTestSuite.cleanDb()) {
+            getDbMigratorAndCleanDatabase(flywayMigrationTestSuite.flywayConfiguration());
+        }
+
+        if (null != flywayMigrationTest && flywayMigrationTest.cleanDb()) {
+            getDbMigratorAndCleanDatabase(flywayMigrationTest.flywayConfiguration());
+        }
+    }
+
+    private void getDbMigratorAndCleanDatabase(String flywayConfiguration) {
+        DbMigrator.dbMigratorForConfiguration(flywayConfiguration).cleanDb();
     }
 
     private void storeFlywayTest(Class<?> flywayTestClass) {
@@ -51,6 +70,8 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
         return flywayClassesPerVersion.get(migrationVersion) == null;
     }
 
+    //todo: add class validations in non-suite case
+    // should have appropriately annotated methods and methods should have appropriate access modifiers
     private Set<Class> getFlywayTestClass(Class<?> clazz) {
         FlywayMigrationTestSuite flywayMigrationTestSuite = clazz.getAnnotation(FlywayMigrationTestSuite.class);
         if (null != flywayMigrationTestSuite) {
@@ -59,6 +80,8 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
         return ImmutableSet.<Class>of(clazz);
     }
 
+    //todo: add class validations in suite case
+    // should have appropriately annotated methods and methods should have appropriate access modifiers
     private Set<Class> classesFromSuite(FlywayMigrationTestSuite flywayMigrationTestSuite) {
         Set<Class> classes = new HashSet<Class>();
 
@@ -89,7 +112,6 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
                 throw new RuntimeException(initializationError);
             }
         }
-
         return childRunners;
     }
 

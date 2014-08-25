@@ -2,8 +2,8 @@ package org.flywaydb.test.runner;
 
 import org.flywaydb.test.annotation.AfterMigration;
 import org.flywaydb.test.annotation.BeforeMigration;
+import org.flywaydb.test.annotation.FlywayMigrationTest;
 import org.flywaydb.test.db.DbMigrator;
-import org.flywaydb.test.runner.rule.CleanDbClassRule;
 import org.flywaydb.test.runner.rule.MigrateToVersionRule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -17,13 +17,17 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.flywaydb.test.db.DbMigrator.dbMigratorForConfiguration;
+
 class FlywayParticularMigrationTestRunner extends BlockJUnit4ClassRunner {
 
     private FlywayTest flywayTest;
+    private String flywayConfiguration;
 
     public FlywayParticularMigrationTestRunner(Class<?> klass) throws InitializationError {
         super(klass);
         flywayTest = FlywayTest.create(klass);
+        flywayConfiguration = klass.getAnnotation(FlywayMigrationTest.class).flywayConfiguration();
     }
 
     @Override
@@ -42,7 +46,6 @@ class FlywayParticularMigrationTestRunner extends BlockJUnit4ClassRunner {
         return testMethodsInParticularOrder;
     }
 
-
     // todo: improve
     @Override
     protected Object createTest() throws Exception {
@@ -52,23 +55,16 @@ class FlywayParticularMigrationTestRunner extends BlockJUnit4ClassRunner {
             if (annotatedField.getType().equals(DbMigrator.class)) {
                 Field field = annotatedField.getField();
                 field.setAccessible(true);
-                field.set(testInstance, flywayTest.getDbMigrator());
+                field.set(testInstance, dbMigratorForConfiguration(flywayConfiguration));
             }
         }
         return testInstance;
     }
 
     @Override
-    protected List<TestRule> classRules() {
-        List<TestRule> classRules = super.classRules();
-        classRules.add(new CleanDbClassRule(flywayTest));
-        return classRules;
-    }
-
-    @Override
     protected List<TestRule> getTestRules(Object target) {
         List<TestRule> testRules = super.getTestRules(target);
-        testRules.add(new MigrateToVersionRule(flywayTest));
+        testRules.add(new MigrateToVersionRule(flywayTest, dbMigratorForConfiguration(flywayConfiguration)));
         return testRules;
     }
 

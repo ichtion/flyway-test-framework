@@ -11,7 +11,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface FlywayMigrationTest {
     boolean cleanDb();
 
-    String migrationVersion();
-
     String flywayConfiguration();
+
+    String migrationVersion();
 }
