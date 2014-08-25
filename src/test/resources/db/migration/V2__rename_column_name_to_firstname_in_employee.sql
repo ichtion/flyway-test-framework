@@ -1,0 +1,1 @@
+alter table employee alter column name rename to firstname;
