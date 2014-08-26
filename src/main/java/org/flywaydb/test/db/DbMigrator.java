@@ -54,11 +54,14 @@ public class DbMigrator {
     }
 
     private boolean migrateTo(MigrationVersion desiredMigrationVersion) {
+        System.out.println("Just about to migrate to: " + desiredMigrationVersion);
         // todo: clean if needed
         if (currentMigrationVersion.equals(desiredMigrationVersion)) {
+            System.out.println("....yyyyy actualy no");
             return true;
         }
         if (currentMigrationVersion.compareTo(desiredMigrationVersion) < 0) {
+            System.out.println("... migrating ...");
             flyway.setTarget(desiredMigrationVersion);
             flyway.migrate();
             currentMigrationVersion = desiredMigrationVersion;
@@ -96,6 +99,7 @@ public class DbMigrator {
     }
 
     public void cleanDb() {
+        System.out.println("====> Cleaning DB <====");
         flyway.clean();
         currentMigrationVersion = MigrationVersion.fromVersion("-1");
     }

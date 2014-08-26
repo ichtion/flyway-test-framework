@@ -22,16 +22,26 @@ class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationT
 
     @Override
     protected List<FlywayParticularMigrationTestRunner> getChildren() {
+        //todo cleanup
         List<FlywayParticularMigrationTestRunner> runners = new ArrayList<FlywayParticularMigrationTestRunner>();
+        List<FlywayParticularMigrationTestRunner> beforeMigrationRunners = new ArrayList<FlywayParticularMigrationTestRunner>();
+        List<FlywayParticularMigrationTestRunner> doMigrationRunners = new ArrayList<FlywayParticularMigrationTestRunner>();
+        List<FlywayParticularMigrationTestRunner> afterMigrationRunners = new ArrayList<FlywayParticularMigrationTestRunner>();
 
         for(Class<?> testClass : flywayTestClasses) {
-            //todo cleanup
             try {
-                runners.add(new FlywayParticularMigrationTestRunner(testClass));
+                beforeMigrationRunners.add(new FlywayBeforeParticularMigrationTestRunner(testClass));
+                doMigrationRunners.add(new FlywayDoParticularMigrationTestRunner(testClass));
+                afterMigrationRunners.add(new FlywayAfterParticularMigrationTestRunner(testClass));
             } catch (InitializationError initializationError) {
                 throw new RuntimeException(initializationError);
             }
         }
+
+        runners.addAll(beforeMigrationRunners);
+        runners.addAll(doMigrationRunners);
+        runners.addAll(afterMigrationRunners);
+
         return runners;
     }
 
