@@ -1,9 +1,6 @@
 package org.flywaydb.test.runner;
 
 import org.flywaydb.test.annotation.AfterMigration;
-import org.flywaydb.test.annotation.BeforeMigration;
-import org.flywaydb.test.runner.FlywayParticularMigrationTestRunner;
-import org.junit.Test;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 

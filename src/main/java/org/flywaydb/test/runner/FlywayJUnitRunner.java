@@ -2,7 +2,6 @@ package org.flywaydb.test.runner;
 
 import com.google.common.collect.ImmutableSet;
 import org.flywaydb.core.api.MigrationVersion;
-import org.flywaydb.test.AbstractFlywayMigrationTest;
 import org.flywaydb.test.annotation.FlywayMigrationTest;
 import org.flywaydb.test.annotation.FlywayMigrationTestSuite;
 import org.flywaydb.test.db.DbMigrator;
@@ -87,7 +86,7 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
 
         for (String packageWithFlywayTests : flywayMigrationTestSuite.packages()) {
             Reflections reflections = new Reflections(packageWithFlywayTests);
-            classes.addAll(reflections.getSubTypesOf(AbstractFlywayMigrationTest.class));
+            classes.addAll(reflections.getTypesAnnotatedWith(FlywayMigrationTest.class));
         }
 
         return classes;

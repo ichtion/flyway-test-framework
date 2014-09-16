@@ -1,10 +1,7 @@
 package org.flywaydb.test;
 
-import org.flywaydb.core.api.MigrationVersion;
-import org.flywaydb.test.annotation.FlywayMigrationTest;
 import org.flywaydb.test.db.DbMigrator;
 import org.junit.Before;
-import org.junit.Test;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import javax.inject.Inject;
@@ -19,9 +16,4 @@ public abstract class AbstractFlywayMigrationTest {
         jdbcTemplate = new NamedParameterJdbcTemplate(dbMigrator.getDataSource());
     }
 
-    @Test
-    public void migrate() {
-        FlywayMigrationTest flywayMigrationTest = this.getClass().getAnnotation(FlywayMigrationTest.class);
-        dbMigrator.migrateToVersion(MigrationVersion.fromVersion(flywayMigrationTest.migrationVersion()));
-    }
 }
