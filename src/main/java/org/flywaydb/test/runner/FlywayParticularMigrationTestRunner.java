@@ -1,7 +1,6 @@
 package org.flywaydb.test.runner;
 
 import org.flywaydb.test.annotation.FlywayMigrationTest;
-import org.flywaydb.test.db.DbMigrator;
 import org.flywaydb.test.runner.rule.MigrateToVersionRule;
 import org.junit.rules.TestRule;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -9,6 +8,7 @@ import org.junit.runners.model.FrameworkField;
 import org.junit.runners.model.InitializationError;
 
 import javax.inject.Inject;
+import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.util.List;
 
@@ -30,16 +30,17 @@ abstract class FlywayParticularMigrationTestRunner extends BlockJUnit4ClassRunne
         return flywayTest.getName();
     }
 
-    // todo: improve
     @Override
     protected Object createTest() throws Exception {
         Object testInstance = super.createTest();
         List<FrameworkField> annotatedFields = getTestClass().getAnnotatedFields(Inject.class);
         for (FrameworkField annotatedField : annotatedFields) {
-            if (annotatedField.getType().equals(DbMigrator.class)) {
+            if (annotatedField.getType().equals(DataSource.class)) {
                 Field field = annotatedField.getField();
                 field.setAccessible(true);
-                field.set(testInstance, dbMigratorForConfiguration(flywayConfiguration));
+                field.set(testInstance, dbMigratorForConfiguration(flywayConfiguration).getDataSource());
+            } else {
+                throw new UnsupportedOperationException("Annotation @Inject should be used only with field of javax.sql.DataSource type");
             }
         }
         return testInstance;

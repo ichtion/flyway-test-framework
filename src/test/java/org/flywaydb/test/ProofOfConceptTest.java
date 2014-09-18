@@ -3,13 +3,13 @@ package org.flywaydb.test;
 import org.flywaydb.test.annotation.AfterMigration;
 import org.flywaydb.test.annotation.BeforeMigration;
 import org.flywaydb.test.annotation.FlywayMigrationTest;
-import org.flywaydb.test.db.DbMigrator;
 import org.flywaydb.test.runner.FlywayJUnitRunner;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import javax.inject.Inject;
+import javax.sql.DataSource;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,7 +19,7 @@ import static org.flywaydb.util.TestUtils.id;
 @FlywayMigrationTest(cleanDb = true, migrationVersion = "2", flywayConfiguration = "/flyway.properties")
 public class ProofOfConceptTest {
     @Inject
-    private DbMigrator dbMigrator;
+    private DataSource dataSource;
     protected NamedParameterJdbcTemplate jdbcTemplate;
 
 
@@ -28,7 +28,7 @@ public class ProofOfConceptTest {
 
     @Before
     public void before() {
-        jdbcTemplate = new NamedParameterJdbcTemplate(dbMigrator.getDataSource());
+        jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
     }
 
 
