@@ -6,40 +6,43 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationTestRunner> {
-    private Set<Class<?>> flywayTestClasses;
-    private MigrationVersion migrationVersion;
+    private final MigrationVersion migrationVersion;
+    private final List<FlywayParticularMigrationTestRunner> childRunners;
 
     public FlywayMigrationSuiteRunner(SuiteForMigrationVersion suiteForMigrationVersion) throws InitializationError {
         super(suiteForMigrationVersion.getClass());
         this.migrationVersion = suiteForMigrationVersion.getMigrationVersion();
-        this.flywayTestClasses = suiteForMigrationVersion.getClasses();
+        childRunners = getChildRunners(suiteForMigrationVersion);
+    }
+
+    private List<FlywayParticularMigrationTestRunner> getChildRunners(SuiteForMigrationVersion suiteForMigrationVersion) throws InitializationError {
+        List<FlywayParticularMigrationTestRunner> childRunners = new ArrayList<FlywayParticularMigrationTestRunner>();
+        List<FlywayParticularMigrationTestRunner> beforeMigrationRunners = new ArrayList<FlywayParticularMigrationTestRunner>();
+        List<FlywayParticularMigrationTestRunner> afterMigrationRunners = new ArrayList<FlywayParticularMigrationTestRunner>();
+
+        for(Class<?> testClass : suiteForMigrationVersion.getClasses()) {
+                beforeMigrationRunners.add(new FlywayBeforeParticularMigrationTestRunner(testClass));
+                afterMigrationRunners.add(new FlywayAfterParticularMigrationTestRunner(testClass));
+        }
+
+        childRunners.addAll(beforeMigrationRunners);
+        childRunners.addAll(afterMigrationRunners);
+
+        return childRunners;
     }
 
     @Override
     protected List<FlywayParticularMigrationTestRunner> getChildren() {
-        //todo cleanup
-        List<FlywayParticularMigrationTestRunner> runners = new ArrayList<FlywayParticularMigrationTestRunner>();
-        List<FlywayParticularMigrationTestRunner> beforeMigrationRunners = new ArrayList<FlywayParticularMigrationTestRunner>();
-        List<FlywayParticularMigrationTestRunner> afterMigrationRunners = new ArrayList<FlywayParticularMigrationTestRunner>();
-
-        for(Class<?> testClass : flywayTestClasses) {
-            try {
-                beforeMigrationRunners.add(new FlywayBeforeParticularMigrationTestRunner(testClass));
-                afterMigrationRunners.add(new FlywayAfterParticularMigrationTestRunner(testClass));
-            } catch (InitializationError initializationError) {
-                throw new RuntimeException(initializationError);
-            }
-        }
-
-        runners.addAll(beforeMigrationRunners);
-        runners.addAll(afterMigrationRunners);
-
-        return runners;
+        return childRunners;
     }
 
     @Override
