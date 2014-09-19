@@ -1,19 +1,19 @@
 package org.flywaydb.test.runner.rule;
 
+import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.test.annotation.AfterMigration;
 import org.flywaydb.test.annotation.BeforeMigration;
 import org.flywaydb.test.db.DbMigrator;
-import org.flywaydb.test.runner.FlywayTest;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 public class MigrateToVersionRule implements TestRule {
-    private final FlywayTest flywayTest;
+    private final MigrationVersion migrationVersion;
     private final DbMigrator dbMigrator;
 
-    public MigrateToVersionRule(FlywayTest flywayTest, DbMigrator dbMigrator) {
-        this.flywayTest = flywayTest;
+    public MigrateToVersionRule(MigrationVersion migrationVersion, DbMigrator dbMigrator) {
+        this.migrationVersion = migrationVersion;
         this.dbMigrator = dbMigrator;
     }
 
@@ -23,9 +23,9 @@ public class MigrateToVersionRule implements TestRule {
             @Override
             public void evaluate() throws Throwable {
                 if (description.getAnnotation(BeforeMigration.class) != null) {
-                    dbMigrator.migrateToVersionJustBefore(flywayTest.getMigrationVersion());
+                    dbMigrator.migrateToVersionJustBefore(migrationVersion);
                 } else if (description.getAnnotation(AfterMigration.class) != null) {
-                    dbMigrator.migrateToVersion(flywayTest.getMigrationVersion());
+                    dbMigrator.migrateToVersion(migrationVersion);
                 }
                 base.evaluate();
             }

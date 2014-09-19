@@ -4,7 +4,6 @@ import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationInfo;
 import org.flywaydb.core.api.MigrationInfoService;
 import org.flywaydb.core.api.MigrationVersion;
-import org.flywaydb.test.util.PropertiesUtils;
 
 import javax.sql.DataSource;
 
@@ -15,13 +14,7 @@ public class DbMigrator {
 
     private Flyway flyway;
 
-    // Todo: add DbMigratorProvider for particular configuration
-    // (the idea is to have a single instance of migrator per flyway configuration
-    // Todo: make it multi-thread proof
-    // resolve a problem with two different configurations pointing to the same DB
-    // in such case there will be discrepancy between actual MigrationVersion of DB
-    // and version stored in DbMigrator
-    public static DbMigrator dbMigratorForConfiguration(String flywayConfiguration) {
+    public static DbMigrator dbMigratorForConfiguration(FlywayConfiguration flywayConfiguration) {
         if (null != migrator) {
             return migrator;
         }
@@ -29,9 +22,9 @@ public class DbMigrator {
         return migrator;
     }
 
-    private DbMigrator(String flywayConfiguration) {
+    private DbMigrator(FlywayConfiguration flywayConfiguration) {
         flyway = new Flyway();
-        flyway.configure(PropertiesUtils.load(flywayConfiguration));
+        flyway.configure(flywayConfiguration);
         currentMigrationVersion = computeCurrentVersion();
     }
 
@@ -56,14 +49,10 @@ public class DbMigrator {
     }
 
     private boolean migrateTo(MigrationVersion desiredMigrationVersion) {
-        System.out.println("Just about to migrate to: " + desiredMigrationVersion);
-        // todo: clean if needed
         if (currentMigrationVersion.equals(desiredMigrationVersion)) {
-            System.out.println("....yyyyy actualy no");
             return true;
         }
         if (currentMigrationVersion.compareTo(desiredMigrationVersion) < 0) {
-            System.out.println("... migrating ...");
             flyway.setTarget(desiredMigrationVersion);
             flyway.migrate();
             currentMigrationVersion = desiredMigrationVersion;
@@ -85,7 +74,6 @@ public class DbMigrator {
         throw new IllegalStateException("previous version not found");
     }
 
-
     public DataSource getDataSource() {
         return flyway.getDataSource();
     }
@@ -101,7 +89,6 @@ public class DbMigrator {
     }
 
     public void cleanDb() {
-        System.out.println("====> Cleaning DB <====");
         flyway.clean();
         currentMigrationVersion = MigrationVersion.fromVersion("-1");
     }

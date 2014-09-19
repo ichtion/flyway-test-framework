@@ -47,7 +47,7 @@ class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationT
 
     @Override
     protected String getName() {
-        return "v" + migrationVersion.getVersion();
+        return "v" + migrationVersion.getVersion().replace(".", "_");
     }
 
     @Override

@@ -6,6 +6,8 @@ import org.flywaydb.test.annotation.AfterMigration;
 import org.flywaydb.test.annotation.BeforeMigration;
 import org.flywaydb.test.annotation.FlywayMigrationTest;
 import org.flywaydb.test.annotation.FlywayMigrationTestSuite;
+import org.flywaydb.test.db.FlywayConfiguration;
+import org.flywaydb.test.db.DbMigrator;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
 import org.junit.runner.notification.RunNotifier;
@@ -22,7 +24,8 @@ import java.util.TreeMap;
 import java.util.List;
 import java.util.ArrayList;
 
-import static org.flywaydb.test.db.DbMigrator.dbMigratorForConfiguration;
+import static org.flywaydb.test.db.FlywayConfiguration.flywayConfiguration;
+import static org.flywaydb.test.db.DbMigratorProvider.dbMigratorProvider;
 
 public class FlywayJUnitRunner extends ParentRunner<Runner> {
     private SortedMap<MigrationVersion, Set<Class<?>>> testClassesPerVersion = new TreeMap<MigrationVersion, Set<Class<?>>>();
@@ -40,14 +43,17 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
         FlywayMigrationTest flywayMigrationTest = clazz.getAnnotation(FlywayMigrationTest.class);
 
         if (null != flywayMigrationTestSuite && flywayMigrationTestSuite.cleanDb()) {
-            dbMigratorForConfiguration(flywayMigrationTestSuite.flywayConfiguration())
-                    .cleanDb();
+            cleanDataBase(flywayConfiguration(flywayMigrationTestSuite.flywayConfiguration()));
         }
 
         if (null != flywayMigrationTest && flywayMigrationTest.cleanDb()) {
-            dbMigratorForConfiguration(flywayMigrationTest.flywayConfiguration())
-                    .cleanDb();
+            cleanDataBase(flywayConfiguration(flywayMigrationTest.flywayConfiguration()));
         }
+    }
+
+    private void cleanDataBase(FlywayConfiguration flywayConfiguration) {
+        DbMigrator dbMigrator = dbMigratorProvider().provideDbMigratorForConfiguration(flywayConfiguration);
+        dbMigrator.cleanDb();
     }
 
     private void addTestClassPerMigrationVersion(Class<?> flywayTestClass) {
@@ -104,12 +110,12 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
     }
 
     private void validateTestSuiteWhenClassIsTestSuite(List<Throwable> errors) {
-        if (isTestClassFlywayMigrationTestSuite()) {
+        if (isFlywayMigrationTestSuite()) {
             validateNoBeforeOrAfterMigrationMethods(errors);
         }
     }
 
-    private boolean isTestClassFlywayMigrationTestSuite() {
+    private boolean isFlywayMigrationTestSuite() {
         return null != getTestClass().getJavaClass().getAnnotation(FlywayMigrationTestSuite.class);
     }
 
@@ -123,19 +129,24 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
     }
 
     private void validateTestClassWhenClassIsTestClass(List<Throwable> errors) {
-        List<FrameworkMethod> beforeMigrationMethods = getTestClass().getAnnotatedMethods(BeforeMigration.class);
-        List<FrameworkMethod> afterMigrationMethods = getTestClass().getAnnotatedMethods(AfterMigration.class);
+        if (isFlywayMigrationTest()) {
+            List<FrameworkMethod> beforeMigrationMethods = getTestClass().getAnnotatedMethods(BeforeMigration.class);
+            List<FrameworkMethod> afterMigrationMethods = getTestClass().getAnnotatedMethods(AfterMigration.class);
 
-        if (beforeMigrationMethods.size() > 1 || afterMigrationMethods.size() > 1) {
-            errors.add(new Exception("FlywayMigrationTest should not have more than one method annotated as BeforeMigration or AfterMigration"));
-        } else if (beforeMigrationMethods.size() == 0 && afterMigrationMethods.size() == 0) {
-            errors.add(new Exception("FlywayMigrationTest should have at least one method annotated as either BeforeMigration or AfterMigration"));
-        } else if(beforeMigrationMethods.size() == 1) {
-            beforeMigrationMethods.get(0).validatePublicVoidNoArg(false, errors);
-        } else if (afterMigrationMethods.size() == 1) {
-            afterMigrationMethods.get(0).validatePublicVoidNoArg(false, errors);
+            if (beforeMigrationMethods.size() > 1 || afterMigrationMethods.size() > 1) {
+                errors.add(new Exception("FlywayMigrationTest should not have more than one method annotated as BeforeMigration or AfterMigration"));
+            } else if (beforeMigrationMethods.size() == 0 && afterMigrationMethods.size() == 0) {
+                errors.add(new Exception("FlywayMigrationTest should have at least one method annotated as either BeforeMigration or AfterMigration"));
+            } else if(beforeMigrationMethods.size() == 1) {
+                beforeMigrationMethods.get(0).validatePublicVoidNoArg(false, errors);
+            } else if (afterMigrationMethods.size() == 1) {
+                afterMigrationMethods.get(0).validatePublicVoidNoArg(false, errors);
+            }
         }
+    }
 
+    private boolean isFlywayMigrationTest() {
+        return null != getTestClass().getJavaClass().getAnnotation(FlywayMigrationTest.class);
     }
 
     private Set<Class> getFlywayTestClass(Class<?> clazz) {

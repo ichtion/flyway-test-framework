@@ -1,6 +1,5 @@
 package org.flywaydb.test.runner;
 
-import org.flywaydb.test.annotation.FlywayMigrationTest;
 import org.flywaydb.test.runner.rule.MigrateToVersionRule;
 import org.junit.rules.TestRule;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -12,17 +11,14 @@ import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.util.List;
 
-import static org.flywaydb.test.db.DbMigrator.dbMigratorForConfiguration;
 
 abstract class FlywayParticularMigrationTestRunner extends BlockJUnit4ClassRunner {
 
     private FlywayTest flywayTest;
-    private String flywayConfiguration;
 
     FlywayParticularMigrationTestRunner(Class<?> klass) throws InitializationError {
         super(klass);
         flywayTest = FlywayTest.create(klass);
-        flywayConfiguration = klass.getAnnotation(FlywayMigrationTest.class).flywayConfiguration();
     }
 
     @Override
@@ -38,7 +34,7 @@ abstract class FlywayParticularMigrationTestRunner extends BlockJUnit4ClassRunne
             if (annotatedField.getType().equals(DataSource.class)) {
                 Field field = annotatedField.getField();
                 field.setAccessible(true);
-                field.set(testInstance, dbMigratorForConfiguration(flywayConfiguration).getDataSource());
+                field.set(testInstance, getDataSource());
             } else {
                 throw new UnsupportedOperationException("Annotation @Inject should be used only with field of javax.sql.DataSource type");
             }
@@ -46,10 +42,14 @@ abstract class FlywayParticularMigrationTestRunner extends BlockJUnit4ClassRunne
         return testInstance;
     }
 
+    private DataSource getDataSource() {
+        return flywayTest.getDbMigrator().getDataSource();
+    }
+
     @Override
     protected List<TestRule> getTestRules(Object target) {
         List<TestRule> testRules = super.getTestRules(target);
-        testRules.add(new MigrateToVersionRule(flywayTest, dbMigratorForConfiguration(flywayConfiguration)));
+        testRules.add(new MigrateToVersionRule(flywayTest.getMigrationVersion(), flywayTest.getDbMigrator()));
         return testRules;
     }
 
