@@ -4,7 +4,6 @@ import org.flywaydb.test.annotation.AfterMigration;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 
-import java.util.ArrayList;
 import java.util.List;
 
 class FlywayAfterParticularMigrationTestRunner extends FlywayParticularMigrationTestRunner {
@@ -14,11 +13,7 @@ class FlywayAfterParticularMigrationTestRunner extends FlywayParticularMigration
 
     @Override
     protected List<FrameworkMethod> computeTestMethods() {
-        List<FrameworkMethod> testMethodsInParticularOrder = new ArrayList<FrameworkMethod>();
-
-        testMethodsInParticularOrder.addAll(getTestClass().getAnnotatedMethods(AfterMigration.class));
-
-        return testMethodsInParticularOrder;
+        return getTestClass().getAnnotatedMethods(AfterMigration.class);
     }
 
 }

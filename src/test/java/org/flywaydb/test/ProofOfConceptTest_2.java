@@ -31,7 +31,6 @@ public class ProofOfConceptTest_2 {
         jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
     }
 
-
     @BeforeMigration
     public void insertEmployee() {
         jdbcTemplate.update("insert into employee (id, firstname) values(:id, :name)", of("id", ID, "name", NAME));

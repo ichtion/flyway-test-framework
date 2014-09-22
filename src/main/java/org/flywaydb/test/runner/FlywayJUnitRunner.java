@@ -8,6 +8,9 @@ import org.flywaydb.test.annotation.FlywayMigrationTest;
 import org.flywaydb.test.annotation.FlywayMigrationTestSuite;
 import org.flywaydb.test.db.FlywayConfiguration;
 import org.flywaydb.test.db.DbMigrator;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
 import org.junit.runner.notification.RunNotifier;
@@ -56,6 +59,25 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
         dbMigrator.cleanDb();
     }
 
+    private Set<Class> getFlywayTestClass(Class<?> clazz) {
+        FlywayMigrationTestSuite flywayMigrationTestSuite = clazz.getAnnotation(FlywayMigrationTestSuite.class);
+        if (null != flywayMigrationTestSuite) {
+            return classesFromSuite(flywayMigrationTestSuite);
+        }
+        return ImmutableSet.<Class>of(clazz);
+    }
+
+    private Set<Class> classesFromSuite(FlywayMigrationTestSuite flywayMigrationTestSuite) {
+        Set<Class> classes = new HashSet<Class>();
+
+        for (String packageWithFlywayTests : flywayMigrationTestSuite.packages()) {
+            Reflections reflections = new Reflections(packageWithFlywayTests);
+            classes.addAll(reflections.getTypesAnnotatedWith(FlywayMigrationTest.class));
+        }
+
+        return classes;
+    }
+
     private void addTestClassPerMigrationVersion(Class<?> flywayTestClass) {
         MigrationVersion migrationVersion = getMigrationVersion(flywayTestClass);
         if (thereAreNoMigrationTestsForGivenMigrationVersion(migrationVersion)) {
@@ -86,9 +108,30 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
     @Override
     protected void collectInitializationErrors(List<Throwable> errors) {
         super.collectInitializationErrors(errors);
+        validateClass(errors);
+        validateMethods(errors);
+    }
+
+    private void validateClass(List<Throwable> errors) {
         validateProperClassAnnotations(errors);
-        validateTestSuiteWhenClassIsTestSuite(errors);
-        validateTestClassWhenClassIsTestClass(errors);
+        validateTestSuiteWhenApplicable(errors);
+        validateTestClassWhenApplicable(errors);
+    }
+
+    private void validateMethods(List<Throwable> errors) {
+        validatePublicVoidNoArgMethods(BeforeMigration.class, false, errors);
+        validatePublicVoidNoArgMethods(AfterMigration.class, false, errors);
+        validateNoMethoAnnotatedWith(Test.class, errors);
+        validateNoMethoAnnotatedWith(BeforeClass.class, errors);
+        validateNoMethoAnnotatedWith(AfterClass.class, errors);
+    }
+
+    private void validateNoMethoAnnotatedWith(Class<? extends Annotation> notApplicableAnnotation, List<Throwable> errors) {
+        List<FrameworkMethod> annotatedMethods = getTestClass().getAnnotatedMethods(notApplicableAnnotation);
+
+        if (!annotatedMethods.isEmpty()) {
+            errors.add(new Exception("Migration test should not have any method annotated with @" + notApplicableAnnotation.getSimpleName()));
+        }
     }
 
     private void validateProperClassAnnotations(List<Throwable> errors) {
@@ -109,7 +152,7 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
         }
     }
 
-    private void validateTestSuiteWhenClassIsTestSuite(List<Throwable> errors) {
+    private void validateTestSuiteWhenApplicable(List<Throwable> errors) {
         if (isFlywayMigrationTestSuite()) {
             validateNoBeforeOrAfterMigrationMethods(errors);
         }
@@ -128,7 +171,7 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
         }
     }
 
-    private void validateTestClassWhenClassIsTestClass(List<Throwable> errors) {
+    private void validateTestClassWhenApplicable(List<Throwable> errors) {
         if (isFlywayMigrationTest()) {
             List<FrameworkMethod> beforeMigrationMethods = getTestClass().getAnnotatedMethods(BeforeMigration.class);
             List<FrameworkMethod> afterMigrationMethods = getTestClass().getAnnotatedMethods(AfterMigration.class);
@@ -147,25 +190,6 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
 
     private boolean isFlywayMigrationTest() {
         return null != getTestClass().getJavaClass().getAnnotation(FlywayMigrationTest.class);
-    }
-
-    private Set<Class> getFlywayTestClass(Class<?> clazz) {
-        FlywayMigrationTestSuite flywayMigrationTestSuite = clazz.getAnnotation(FlywayMigrationTestSuite.class);
-        if (null != flywayMigrationTestSuite) {
-            return classesFromSuite(flywayMigrationTestSuite);
-        }
-        return ImmutableSet.<Class>of(clazz);
-    }
-
-    private Set<Class> classesFromSuite(FlywayMigrationTestSuite flywayMigrationTestSuite) {
-        Set<Class> classes = new HashSet<Class>();
-
-        for (String packageWithFlywayTests : flywayMigrationTestSuite.packages()) {
-            Reflections reflections = new Reflections(packageWithFlywayTests);
-            classes.addAll(reflections.getTypesAnnotatedWith(FlywayMigrationTest.class));
-        }
-
-        return classes;
     }
 
     @Override

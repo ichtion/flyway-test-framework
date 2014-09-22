@@ -5,6 +5,7 @@ import org.flywaydb.test.annotation.BeforeMigration;
 import org.flywaydb.test.annotation.FlywayMigrationTest;
 import org.flywaydb.test.runner.FlywayJUnitRunner;
 import org.junit.Before;
+import org.junit.After;
 import org.junit.runner.RunWith;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
@@ -27,9 +28,9 @@ public class AnotherProofOfConceptTest_2 {
 
     @Before
     public void before() {
+        System.out.println("Before works");
         jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
     }
-
 
     @BeforeMigration
     public void insertEmployee() {
@@ -41,5 +42,14 @@ public class AnotherProofOfConceptTest_2 {
         String mainName = jdbcTemplate.queryForObject("select mainname from employee where id=:id", of("id", ID), String.class);
 
         assertThat(mainName).isEqualTo(NAME);
+    }
+
+    @After
+    public void after() {
+        System.out.println("After works");
+    }
+
+    public AnotherProofOfConceptTest_2() {
+        System.out.println("Constructor invoked");
     }
 }
