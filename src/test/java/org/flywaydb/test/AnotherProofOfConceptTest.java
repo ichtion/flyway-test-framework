@@ -27,4 +27,8 @@ public class AnotherProofOfConceptTest extends AbstractFlywayMigrationTest {
 
         assertThat(firstname).isEqualTo(NAME);
     }
+
+    public AnotherProofOfConceptTest() {
+        System.out.println("Constructor for " + this.getClass().getSimpleName());
+    }
 }

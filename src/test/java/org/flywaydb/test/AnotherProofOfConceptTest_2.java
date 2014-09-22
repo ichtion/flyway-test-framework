@@ -50,6 +50,6 @@ public class AnotherProofOfConceptTest_2 {
     }
 
     public AnotherProofOfConceptTest_2() {
-        System.out.println("Constructor invoked");
+        System.out.println("Constructor for " + this.getClass().getSimpleName());
     }
 }

@@ -42,4 +42,8 @@ public class ProofOfConceptTest_2 {
 
         assertThat(mainName).isEqualTo(NAME);
     }
+
+    public ProofOfConceptTest_2() {
+        System.out.println("Constructor for " + this.getClass().getSimpleName());
+    }
 }
