@@ -11,8 +11,13 @@ public class Test01 {
     }
 
     @Test
-    public void test() {
-        System.out.println("Test01");
+    public void test01() {
+        System.out.println("Test11");
+    }
+
+    @Test
+    public void test02() {
+        System.out.println("Test12");
     }
 
     @AfterClass

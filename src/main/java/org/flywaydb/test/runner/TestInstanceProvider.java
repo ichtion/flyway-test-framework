@@ -2,11 +2,11 @@ package org.flywaydb.test.runner;
 
 import org.junit.runners.model.FrameworkField;
 import org.junit.runners.model.TestClass;
+import sun.plugin.dom.exception.InvalidStateException;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,13 +21,12 @@ class TestInstanceProvider {
 
     public Object provideInstanceFor(FlywayTest flywayTest) {
         if (!testInstances.containsKey(flywayTest)) {
-            Object instance = createInstanceOf(flywayTest);
-            testInstances.put(flywayTest, instance);
+            throw new InvalidStateException("A given instance should first be created");
         }
         return testInstances.get(flywayTest);
     }
 
-    private Object createInstanceOf(FlywayTest flywayTest) {
+    public void createInstanceOf(FlywayTest flywayTest) {
         Object testInstance = getBareInstance(flywayTest);
         List<FrameworkField> annotatedFields = flywayTest.getAnnotatedFields(Inject.class);
         for (FrameworkField annotatedField : annotatedFields) {
@@ -39,7 +38,7 @@ class TestInstanceProvider {
                 throw new UnsupportedOperationException("Annotation @Inject should be used only with field of javax.sql.DataSource type");
             }
         }
-        return testInstance;
+        testInstances.put(flywayTest, testInstance);
     }
 
     private void setDataSource(FlywayTest flywayTest, Object testInstance, Field field) {

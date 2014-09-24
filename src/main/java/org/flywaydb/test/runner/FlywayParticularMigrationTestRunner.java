@@ -12,9 +12,9 @@ abstract class FlywayParticularMigrationTestRunner extends BlockJUnit4ClassRunne
 
     private FlywayTest flywayTest;
 
-    FlywayParticularMigrationTestRunner(Class<?> klass) throws InitializationError {
-        super(klass);
-        flywayTest = new FlywayTest(klass);
+    FlywayParticularMigrationTestRunner(FlywayTest flywayTest) throws InitializationError {
+        super(flywayTest.getJavaClass());
+        this.flywayTest = flywayTest;
     }
 
     @Override

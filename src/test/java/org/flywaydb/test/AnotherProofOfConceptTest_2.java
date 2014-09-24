@@ -4,8 +4,10 @@ import org.flywaydb.test.annotation.AfterMigration;
 import org.flywaydb.test.annotation.BeforeMigration;
 import org.flywaydb.test.annotation.FlywayMigrationTest;
 import org.flywaydb.test.runner.FlywayJUnitRunner;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.After;
+import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
@@ -20,14 +22,14 @@ import static org.flywaydb.util.TestUtils.id;
 @FlywayMigrationTest(cleanDb = true, migrationVersion = "2_1", flywayConfiguration = "/flyway.properties")
 public class AnotherProofOfConceptTest_2 {
     @Inject
-    private DataSource dataSource;
-    private NamedParameterJdbcTemplate jdbcTemplate;
+    private static DataSource dataSource;
+    private static NamedParameterJdbcTemplate jdbcTemplate;
 
     private static final String ID = id();
     private static final String NAME = "anotherName";
 
-    @Before
-    public void before() {
+    @BeforeClass
+    public static void beforeClass() {
         System.out.println("Before works");
         jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
     }
@@ -44,8 +46,8 @@ public class AnotherProofOfConceptTest_2 {
         assertThat(mainName).isEqualTo(NAME);
     }
 
-    @After
-    public void after() {
+    @AfterClass
+    public static void afterClass() {
         System.out.println("After works");
     }
 
