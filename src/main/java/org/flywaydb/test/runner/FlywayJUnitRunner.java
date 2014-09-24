@@ -17,6 +17,7 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.ParentRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.Statement;
 import org.reflections.Reflections;
 
 import java.lang.annotation.Annotation;
@@ -106,6 +107,43 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
     }
 
     @Override
+    protected Statement classBlock(RunNotifier notifier) {
+        return childrenInvoker(notifier);
+    }
+
+    @Override
+    protected String getName() {
+        return "Migration suite";
+    }
+
+    @Override
+    protected List<Runner> getChildren() {
+        List<Runner> childRunners = new ArrayList<Runner>();
+
+        for (MigrationVersion migrationVersion : testClassesPerVersion.keySet()) {
+            try {
+                SuiteForMigrationVersion suiteForMigrationVersion = new SuiteForMigrationVersion(
+                        migrationVersion,
+                        testClassesPerVersion.get(migrationVersion));
+                childRunners.add(new FlywayMigrationSuiteRunner(suiteForMigrationVersion));
+            } catch (InitializationError initializationError) {
+                throw new RuntimeException(initializationError);
+            }
+        }
+        return childRunners;
+    }
+
+    @Override
+    protected Description describeChild(Runner child) {
+        return child.getDescription();
+    }
+
+    @Override
+    protected void runChild(Runner child, RunNotifier notifier) {
+        child.run(notifier);
+    }
+
+    @Override
     protected void collectInitializationErrors(List<Throwable> errors) {
         super.collectInitializationErrors(errors);
         validateClass(errors);
@@ -190,37 +228,5 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
 
     private boolean isFlywayMigrationTest() {
         return null != getTestClass().getJavaClass().getAnnotation(FlywayMigrationTest.class);
-    }
-
-    @Override
-    protected String getName() {
-        return "Migration suite";
-    }
-
-    @Override
-    protected List<Runner> getChildren() {
-        List<Runner> childRunners = new ArrayList<Runner>();
-
-        for (MigrationVersion migrationVersion : testClassesPerVersion.keySet()) {
-            try {
-                SuiteForMigrationVersion suiteForMigrationVersion = new SuiteForMigrationVersion(
-                        migrationVersion,
-                        testClassesPerVersion.get(migrationVersion));
-                childRunners.add(new FlywayMigrationSuiteRunner(suiteForMigrationVersion));
-            } catch (InitializationError initializationError) {
-                throw new RuntimeException(initializationError);
-            }
-        }
-        return childRunners;
-    }
-
-    @Override
-    protected Description describeChild(Runner child) {
-        return child.getDescription();
-    }
-
-    @Override
-    protected void runChild(Runner child, RunNotifier notifier) {
-        child.run(notifier);
     }
 }

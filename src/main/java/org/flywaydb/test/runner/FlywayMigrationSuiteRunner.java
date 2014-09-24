@@ -6,13 +6,8 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.List;
-
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationTestRunner> {
     private final MigrationVersion migrationVersion;

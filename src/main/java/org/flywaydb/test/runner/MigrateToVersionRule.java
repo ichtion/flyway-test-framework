@@ -1,4 +1,4 @@
-package org.flywaydb.test.runner.rule;
+package org.flywaydb.test.runner;
 
 import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.test.annotation.AfterMigration;
@@ -8,7 +8,7 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-public class MigrateToVersionRule implements TestRule {
+class MigrateToVersionRule implements TestRule {
     private final MigrationVersion migrationVersion;
     private final DbMigrator dbMigrator;
 

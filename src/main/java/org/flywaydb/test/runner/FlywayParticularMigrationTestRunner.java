@@ -1,6 +1,5 @@
 package org.flywaydb.test.runner;
 
-import org.flywaydb.test.runner.rule.MigrateToVersionRule;
 import org.junit.rules.TestRule;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.InitializationError;

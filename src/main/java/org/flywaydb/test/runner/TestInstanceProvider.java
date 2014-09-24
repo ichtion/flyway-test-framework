@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TestInstanceProvider {
+class TestInstanceProvider {
     private static TestInstanceProvider testInstanceProvider = new TestInstanceProvider();
     private Map<TestClass, Object> testInstances = new HashMap<TestClass, Object>();
 
@@ -19,7 +19,7 @@ public class TestInstanceProvider {
         return testInstanceProvider;
     }
 
-    public Object provideInstanceFor(FlywayTest flywayTest) throws IllegalAccessException, InstantiationException, InvocationTargetException {
+    public Object provideInstanceFor(FlywayTest flywayTest) {
         if (!testInstances.containsKey(flywayTest)) {
             Object instance = createInstanceOf(flywayTest);
             testInstances.put(flywayTest, instance);
@@ -27,19 +27,35 @@ public class TestInstanceProvider {
         return testInstances.get(flywayTest);
     }
 
-    private Object createInstanceOf(FlywayTest flywayTest) throws IllegalAccessException, InvocationTargetException, InstantiationException {
-        Object testInstance = flywayTest.getOnlyConstructor().newInstance();
+    private Object createInstanceOf(FlywayTest flywayTest) {
+        Object testInstance = getBareInstance(flywayTest);
         List<FrameworkField> annotatedFields = flywayTest.getAnnotatedFields(Inject.class);
         for (FrameworkField annotatedField : annotatedFields) {
             if (annotatedField.getType().equals(DataSource.class)) {
                 Field field = annotatedField.getField();
                 field.setAccessible(true);
-                field.set(testInstance, aDataSource(flywayTest));
+                setDataSource(flywayTest, testInstance, field);
             } else {
                 throw new UnsupportedOperationException("Annotation @Inject should be used only with field of javax.sql.DataSource type");
             }
         }
         return testInstance;
+    }
+
+    private void setDataSource(FlywayTest flywayTest, Object testInstance, Field field) {
+        try {
+            field.set(testInstance, aDataSource(flywayTest));
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Object getBareInstance(FlywayTest flywayTest) {
+        try {
+            return flywayTest.getOnlyConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private DataSource aDataSource(FlywayTest testClass) {

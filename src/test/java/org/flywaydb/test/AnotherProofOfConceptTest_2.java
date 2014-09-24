@@ -21,7 +21,7 @@ import static org.flywaydb.util.TestUtils.id;
 public class AnotherProofOfConceptTest_2 {
     @Inject
     private DataSource dataSource;
-    protected NamedParameterJdbcTemplate jdbcTemplate;
+    private NamedParameterJdbcTemplate jdbcTemplate;
 
     private static final String ID = id();
     private static final String NAME = "anotherName";
