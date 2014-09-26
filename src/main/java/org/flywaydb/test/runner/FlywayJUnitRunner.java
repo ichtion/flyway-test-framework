@@ -8,8 +8,8 @@ import org.flywaydb.test.annotation.FlywayMigrationTest;
 import org.flywaydb.test.annotation.FlywayMigrationTestSuite;
 import org.flywaydb.test.db.FlywayConfiguration;
 import org.flywaydb.test.db.DbMigrator;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
@@ -160,8 +160,8 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
         validatePublicVoidNoArgMethods(BeforeMigration.class, false, errors);
         validatePublicVoidNoArgMethods(AfterMigration.class, false, errors);
         validateNoMethoAnnotatedWith(Test.class, errors);
-        validateNoMethoAnnotatedWith(Before.class, errors);
-        validateNoMethoAnnotatedWith(After.class, errors);
+        validateNoMethoAnnotatedWith(BeforeClass.class, errors);
+        validateNoMethoAnnotatedWith(AfterClass.class, errors);
     }
 
     private void validateNoMethoAnnotatedWith(Class<? extends Annotation> notApplicableAnnotation, List<Throwable> errors) {

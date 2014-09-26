@@ -48,7 +48,7 @@ public class DbMigrator {
         return migrateTo(desiredMigrationVersion);
     }
 
-    private boolean migrateTo(MigrationVersion desiredMigrationVersion) {
+    private synchronized boolean migrateTo(MigrationVersion desiredMigrationVersion) {
         if (currentMigrationVersion.equals(desiredMigrationVersion)) {
             return true;
         }
