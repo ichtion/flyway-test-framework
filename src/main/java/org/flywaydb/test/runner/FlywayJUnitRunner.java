@@ -169,9 +169,10 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
         validateNoMethod(AfterClass.class, errors);
     }
 
-    //TODO
     private void validateExactlyOneMethod(Class<? extends Annotation> annotation, List<Throwable> errors) {
-
+        if (getTestClass().getAnnotatedMethods(annotation).size() != 1) {
+            errors.add(new Exception("There should be exactly one method annotated with @" + annotation.getSimpleName()));
+        }
     }
 
     private void validateNoMethod(Class<? extends Annotation> notApplicableAnnotation, List<Throwable> errors) {
