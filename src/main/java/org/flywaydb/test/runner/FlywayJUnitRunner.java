@@ -168,8 +168,8 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
     }
 
     private void validateExactlyOneMethod(Class<? extends Annotation> annotation, List<Throwable> errors) {
-        if (getTestClass().getAnnotatedMethods(annotation).size() != 1) {
-            errors.add(new Exception("There should be exactly one method annotated with @" + annotation.getSimpleName()));
+        if (getTestClass().getAnnotatedMethods(annotation).size() > 1) {
+            errors.add(new Exception("There should not more than one method annotated with @" + annotation.getSimpleName()));
         }
     }
 
