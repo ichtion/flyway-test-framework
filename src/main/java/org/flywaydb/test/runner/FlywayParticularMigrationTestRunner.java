@@ -2,7 +2,6 @@ package org.flywaydb.test.runner;
 
 import org.flywaydb.test.annotation.AfterMigration;
 import org.flywaydb.test.annotation.BeforeMigration;
-import org.flywaydb.test.db.DbMigrationSemaphor;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -26,11 +25,10 @@ import org.junit.runners.model.Statement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeoutException;
 
-import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.flywaydb.test.db.DbMigrationSemaphor.dbMigrationSemaphor;
 import static org.flywaydb.test.runner.TestInstanceProvider.testInstanceProvider;
 import static org.junit.runner.Description.createTestDescription;
 
@@ -38,7 +36,7 @@ class FlywayParticularMigrationTestRunner extends ParentRunner<FrameworkMethod> 
 
     private FlywayTest flywayTest;
     private List<FrameworkMethod> methodsToBeRun = new ArrayList<FrameworkMethod>();
-    private DbMigrationSemaphor dbMigrationSemaphor = dbMigrationSemaphor();
+    private CountDownLatch beforeMethodCountDownLatch;
 
     FlywayParticularMigrationTestRunner(FlywayTest flywayTest) throws InitializationError {
         super(flywayTest.getJavaClass());
@@ -74,6 +72,7 @@ class FlywayParticularMigrationTestRunner extends ParentRunner<FrameworkMethod> 
         Statement statement = childrenInvoker(notifier);
         statement = withBefores(testInstance, statement);
         statement = withAfters(testInstance, statement);
+        //TODO analyze if rules are precisely meant for rather group of tests than a one test only
         statement = withClassRules(statement);
 
         return statement;
@@ -97,20 +96,43 @@ class FlywayParticularMigrationTestRunner extends ParentRunner<FrameworkMethod> 
     @Override
     protected void runChild(final FrameworkMethod method, RunNotifier notifier) {
         Description description = describeChild(method);
-        if (method.getAnnotation(Ignore.class) != null) {
+        if (isIgnored(method)) {
+            if (isBeforeMigration(method)) {
+                beforeMethodCountDownLatch.countDown();
+            }
             notifier.fireTestIgnored(description);
-        } else if (method.getAnnotation(AfterMigration.class) != null) {
-            dbMigrationSemaphor.registerReadyForMigration();
-            await().atMost(30, SECONDS).until(new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    return dbMigrationSemaphor.isReadyToMigrate();
-                }
-            });
+        } else if (isAfterMigration(method)) {
+            if (isBeforeMigrationAlreadyFinished()) {
+                runLeaf(methodBlock(method), description, notifier);
+            } else {
+                throw new RuntimeException(new TimeoutException("BeforeMethods should have been finished by now"));
+            }
+        } else if (isBeforeMigration(method)) {
             runLeaf(methodBlock(method), description, notifier);
-        } else {
-            runLeaf(methodBlock(method), description, notifier);
+            beforeMethodCountDownLatch.countDown();
         }
+    }
+
+    private boolean isBeforeMigrationAlreadyFinished() {
+        try {
+            System.out.println("Latch count: " + beforeMethodCountDownLatch.getCount());
+            //TODO add concept of timeout to @FlywayMigrationTest
+            return beforeMethodCountDownLatch.await(10, SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean isAfterMigration(FrameworkMethod method) {
+        return method.getAnnotation(AfterMigration.class) != null;
+    }
+
+    private boolean isIgnored(FrameworkMethod method) {
+        return method.getAnnotation(Ignore.class) != null;
+    }
+
+    private boolean isBeforeMigration(FrameworkMethod method) {
+        return method.getAnnotation(BeforeMigration.class) != null;
     }
 
     private Statement methodBlock(FrameworkMethod method) {
@@ -169,5 +191,9 @@ class FlywayParticularMigrationTestRunner extends ParentRunner<FrameworkMethod> 
 
     private boolean shouldRun(Filter filter, FrameworkMethod methodToBeRun) {
         return filter.shouldRun(createTestDescription(flywayTest.getJavaClass(), methodToBeRun.getName()));
+    }
+
+    public void setBeforeMethodCountDownLatch(CountDownLatch beforeMethodCountDownLatch) {
+        this.beforeMethodCountDownLatch = beforeMethodCountDownLatch;
     }
 }

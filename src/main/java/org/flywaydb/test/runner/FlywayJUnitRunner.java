@@ -31,6 +31,9 @@ import java.util.ArrayList;
 import static org.flywaydb.test.db.FlywayConfiguration.flywayConfiguration;
 import static org.flywaydb.test.db.DbMigratorProvider.dbMigratorProvider;
 
+//TODO FlywayJUnitRunner should be responsible for setting DbMigrationSemaphoreProvider
+//TODO how DbMigrationProvider will work in case of a ignored test in a test suite and how should it work in case of ignored BeforeMigration method
+//TODO There should be separate runner for single test and for suite
 public class FlywayJUnitRunner extends ParentRunner<Runner> {
     private SortedMap<MigrationVersion, Set<Class<?>>> testClassesPerVersion = new TreeMap<MigrationVersion, Set<Class<?>>>();
 
@@ -159,12 +162,19 @@ public class FlywayJUnitRunner extends ParentRunner<Runner> {
     private void validateMethods(List<Throwable> errors) {
         validatePublicVoidNoArgMethods(BeforeMigration.class, false, errors);
         validatePublicVoidNoArgMethods(AfterMigration.class, false, errors);
-        validateNoMethoAnnotatedWith(Test.class, errors);
-        validateNoMethoAnnotatedWith(BeforeClass.class, errors);
-        validateNoMethoAnnotatedWith(AfterClass.class, errors);
+        validateExactlyOneMethod(BeforeMigration.class, errors);
+        validateExactlyOneMethod(AfterMigration.class, errors);
+        validateNoMethod(Test.class, errors);
+        validateNoMethod(BeforeClass.class, errors);
+        validateNoMethod(AfterClass.class, errors);
     }
 
-    private void validateNoMethoAnnotatedWith(Class<? extends Annotation> notApplicableAnnotation, List<Throwable> errors) {
+    //TODO
+    private void validateExactlyOneMethod(Class<? extends Annotation> annotation, List<Throwable> errors) {
+
+    }
+
+    private void validateNoMethod(Class<? extends Annotation> notApplicableAnnotation, List<Throwable> errors) {
         List<FrameworkMethod> annotatedMethods = getTestClass().getAnnotatedMethods(notApplicableAnnotation);
 
         if (!annotatedMethods.isEmpty()) {
