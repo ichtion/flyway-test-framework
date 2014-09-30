@@ -13,14 +13,11 @@ import org.junit.runners.model.Statement;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-
-import static org.flywaydb.test.runner.TestInstanceProvider.testInstanceProvider;
 
 class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationTestRunner> {
     private final MigrationVersion migrationVersion;
     private final List<FlywayParticularMigrationTestRunner> childRunners;
+    private final FlywayMigrationSuiteChildrenRunnerBuilder childrenRunnerBuilder;
 
     private List<Thread> childThreads = new ArrayList<Thread>();
 
@@ -35,29 +32,16 @@ class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationT
             }
 
             @Override
-            public void finished() { }
+            public void finished() {
+            }
         });
         this.migrationVersion = suiteForMigrationVersion.getMigrationVersion();
+        childrenRunnerBuilder = new FlywayMigrationSuiteChildrenRunnerBuilder();
         childRunners = getChildRunners(suiteForMigrationVersion);
     }
 
-    //TODO introduce a concept of RunnerBuilder so this logic is encapsulated there
-    //TODO remove concept of testInstanceProvider - this should also be created by the builder
     private List<FlywayParticularMigrationTestRunner> getChildRunners(SuiteForMigrationVersion suiteForMigrationVersion) throws InitializationError {
-        List<FlywayParticularMigrationTestRunner> childRunners = new ArrayList<FlywayParticularMigrationTestRunner>();
-        Set<Class<?>> suiteForMigrationVersionClasses = suiteForMigrationVersion.getClasses();
-        CountDownLatch beforeMigrationMethodCountDownLatch = new CountDownLatch(suiteForMigrationVersionClasses.size());
-
-        for (Class<?> testClass : suiteForMigrationVersionClasses) {
-            FlywayTest flywayTest = new FlywayTest(testClass);
-            testInstanceProvider().createInstanceOf(flywayTest);
-
-            FlywayParticularMigrationTestRunner flywayParticularMigrationTestRunner = new FlywayParticularMigrationTestRunner(flywayTest);
-            flywayParticularMigrationTestRunner.setBeforeMethodCountDownLatch(beforeMigrationMethodCountDownLatch);
-            childRunners.add(flywayParticularMigrationTestRunner);
-        }
-
-        return childRunners;
+        return childrenRunnerBuilder.buildChildrenRunnersForSuite(suiteForMigrationVersion);
     }
 
     @Override

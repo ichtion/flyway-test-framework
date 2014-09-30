@@ -29,12 +29,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.flywaydb.test.runner.TestInstanceProvider.testInstanceProvider;
 import static org.junit.runner.Description.createTestDescription;
 
 class FlywayParticularMigrationTestRunner extends ParentRunner<FrameworkMethod> implements Filterable {
 
     private FlywayTest flywayTest;
+    private Object testInstance;
     private List<FrameworkMethod> methodsToBeRun = new ArrayList<FrameworkMethod>();
     private CountDownLatch beforeMethodCountDownLatch;
 
@@ -67,8 +67,6 @@ class FlywayParticularMigrationTestRunner extends ParentRunner<FrameworkMethod> 
     }
 
     protected Statement classBlock(final RunNotifier notifier) {
-        Object testInstance = testInstanceProvider().provideInstanceFor(flywayTest);
-
         Statement statement = childrenInvoker(notifier);
         statement = withBefores(testInstance, statement);
         statement = withAfters(testInstance, statement);
@@ -116,7 +114,7 @@ class FlywayParticularMigrationTestRunner extends ParentRunner<FrameworkMethod> 
     private boolean isBeforeMigrationAlreadyFinished() {
         try {
             System.out.println("Latch count: " + beforeMethodCountDownLatch.getCount());
-            //TODO add concept of timeout to @FlywayMigrationTest
+            //TODO add concept of timeout to @BeforeMigration and @AfterMigration
             return beforeMethodCountDownLatch.await(10, SECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -136,10 +134,8 @@ class FlywayParticularMigrationTestRunner extends ParentRunner<FrameworkMethod> 
     }
 
     private Statement methodBlock(FrameworkMethod method) {
-        Object test = testInstanceProvider().provideInstanceFor(flywayTest);
-
-        Statement statement = new InvokeMethod(method, test);
-        statement = withRules(method, test, statement);
+        Statement statement = new InvokeMethod(method, testInstance);
+        statement = withRules(method, testInstance, statement);
         return statement;
     }
 
@@ -195,5 +191,9 @@ class FlywayParticularMigrationTestRunner extends ParentRunner<FrameworkMethod> 
 
     public void setBeforeMethodCountDownLatch(CountDownLatch beforeMethodCountDownLatch) {
         this.beforeMethodCountDownLatch = beforeMethodCountDownLatch;
+    }
+
+    public void setTestInstance(Object testInstance) {
+        this.testInstance = testInstance;
     }
 }

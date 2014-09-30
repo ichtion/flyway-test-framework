@@ -31,8 +31,6 @@ import java.util.ArrayList;
 import static org.flywaydb.test.db.FlywayConfiguration.flywayConfiguration;
 import static org.flywaydb.test.db.DbMigratorProvider.dbMigratorProvider;
 
-//TODO FlywayJUnitRunner should be responsible for setting DbMigrationSemaphoreProvider
-//TODO how DbMigrationProvider will work in case of a ignored test in a test suite and how should it work in case of ignored BeforeMigration method
 //TODO There should be separate runner for single test and for suite
 public class FlywayJUnitRunner extends ParentRunner<Runner> {
     private SortedMap<MigrationVersion, Set<Class<?>>> testClassesPerVersion = new TreeMap<MigrationVersion, Set<Class<?>>>();
