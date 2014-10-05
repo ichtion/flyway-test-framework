@@ -8,10 +8,8 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runner.notification.StoppedByUserException;
 import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
-import org.junit.runners.model.RunnerScheduler;
 import org.junit.runners.model.Statement;
 
-import java.util.ArrayList;
 import java.util.List;
 
 class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationTestRunner> {
@@ -19,22 +17,8 @@ class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationT
     private final List<FlywayParticularMigrationTestRunner> childRunners;
     private final FlywayMigrationSuiteChildrenRunnerBuilder childrenRunnerBuilder;
 
-    private List<Thread> childThreads = new ArrayList<Thread>();
-
     public FlywayMigrationSuiteRunner(SuiteForMigrationVersion suiteForMigrationVersion) throws InitializationError {
         super(suiteForMigrationVersion.getClass());
-        setScheduler(new RunnerScheduler() {
-            @Override
-            public void schedule(Runnable childStatement) {
-                Thread thread = new Thread(childStatement);
-                childThreads.add(thread);
-                thread.start();
-            }
-
-            @Override
-            public void finished() {
-            }
-        });
         this.migrationVersion = suiteForMigrationVersion.getMigrationVersion();
         childrenRunnerBuilder = new FlywayMigrationSuiteChildrenRunnerBuilder();
         childRunners = getChildRunners(suiteForMigrationVersion);
@@ -59,14 +43,35 @@ class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationT
         return child.getDescription();
     }
 
+    //TODO detach from parent runner if it does not provide value, this empty method proves that solution is not consistent
     @Override
     protected void runChild(FlywayParticularMigrationTestRunner child, RunNotifier notifier) {
-        child.run(notifier);
+
     }
 
     @Override
-    protected Statement classBlock(RunNotifier notifier) {
-        return childrenInvoker(notifier);
+    //TODO improve
+    protected Statement classBlock(final RunNotifier notifier) {
+        Statement statement = new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                for (FlywayParticularMigrationTestRunner runner : childRunners) {
+                    runner.runBeforeMigrationMethod(notifier);
+                }
+                for (FlywayParticularMigrationTestRunner runner : childRunners) {
+                    runner.runAfterMigrationMethod(notifier);
+                }
+            }
+        };
+
+        for (FlywayParticularMigrationTestRunner runner : childRunners) {
+            statement = runner.withBefores(statement);
+        }
+
+        for (FlywayParticularMigrationTestRunner runner : childRunners) {
+            statement = runner.withAfters(statement);
+        }
+        return statement;
     }
 
     @Override
@@ -75,7 +80,6 @@ class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationT
         try {
             Statement statement = classBlock(notifier);
             statement.evaluate();
-            waitForChildren();
         } catch (AssumptionViolatedException e) {
             testNotifier.fireTestIgnored();
         } catch (StoppedByUserException e) {
@@ -85,14 +89,4 @@ class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationT
         }
     }
 
-    private void waitForChildren() {
-        for (Thread childThread : childThreads) {
-            try {
-                //TODO wait for a "sum of all timeouts" amount of time
-                childThread.join(10000l);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 }

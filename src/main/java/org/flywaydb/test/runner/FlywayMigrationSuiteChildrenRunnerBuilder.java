@@ -13,13 +13,12 @@ class FlywayMigrationSuiteChildrenRunnerBuilder {
     public List<FlywayParticularMigrationTestRunner> buildChildrenRunnersForSuite(SuiteForMigrationVersion suite) throws InitializationError {
         List<FlywayParticularMigrationTestRunner> childRunners = new ArrayList<FlywayParticularMigrationTestRunner>();
         Set<Class<?>> suiteForMigrationVersionClasses = suite.getClasses();
-        CountDownLatch beforeMigrationMethodCountDownLatch = new CountDownLatch(suiteForMigrationVersionClasses.size());
 
         for (Class<?> testClass : suiteForMigrationVersionClasses) {
             FlywayTest flywayTest = new FlywayTest(testClass);
 
             FlywayParticularMigrationTestRunner flywayParticularMigrationTestRunner = new FlywayParticularMigrationTestRunner(flywayTest);
-            injectDependencies(flywayParticularMigrationTestRunner, beforeMigrationMethodCountDownLatch, flywayTest);
+            injectDependencies(flywayParticularMigrationTestRunner, flywayTest);
 
             childRunners.add(flywayParticularMigrationTestRunner);
         }
@@ -27,8 +26,7 @@ class FlywayMigrationSuiteChildrenRunnerBuilder {
         return childRunners;
     }
 
-    private void injectDependencies(FlywayParticularMigrationTestRunner flywayParticularMigrationTestRunner, CountDownLatch beforeMigrationMethodCountDownLatch, FlywayTest flywayTest) {
-        flywayParticularMigrationTestRunner.setBeforeMethodCountDownLatch(beforeMigrationMethodCountDownLatch);
+    private void injectDependencies(FlywayParticularMigrationTestRunner flywayParticularMigrationTestRunner, FlywayTest flywayTest) {
         flywayParticularMigrationTestRunner.setTestInstance(createInstanceOf(flywayTest));
     }
 }
