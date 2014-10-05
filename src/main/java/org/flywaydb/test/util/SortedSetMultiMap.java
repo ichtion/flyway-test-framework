@@ -46,9 +46,12 @@ public class SortedSetMultiMap<K, V> {
         return internalMap.containsValue(value);
     }
 
-    public Set<V> get(Object key) {
+    public Set<V> get(K key) {
         Set<V> value = internalMap.get(key);
-        return value == null ? Collections.<V>emptySet() : value;
+        if (value == null) {
+            internalMap.put(key, new HashSet<V>());
+        }
+        return internalMap.get(key);
     }
 
     public Set<V> put(K key, Set<V> value) {
