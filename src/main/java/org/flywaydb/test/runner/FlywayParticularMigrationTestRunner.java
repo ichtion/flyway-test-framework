@@ -50,7 +50,7 @@ class FlywayParticularMigrationTestRunner implements Filterable {
     }
 
     private void describeIfMethodIsNotFilteredOut(Description testDescription, FrameworkMethod methodToBeRun) {
-        if (methodToBeRun != null) {
+        if (!isFilteredOut(methodToBeRun)) {
             testDescription.addChild(describeChild(methodToBeRun));
         }
     }
@@ -70,11 +70,19 @@ class FlywayParticularMigrationTestRunner implements Filterable {
     }
 
     public void runBeforeMigrationMethod(RunNotifier notifier) {
-        runBeforeOrAfterMigrationMethod(beforeMigrationMethodToBeRun, notifier);
+        if (!isFilteredOut(beforeMigrationMethodToBeRun)) {
+            runBeforeOrAfterMigrationMethod(beforeMigrationMethodToBeRun, notifier);
+        }
     }
 
     public void runAfterMigrationMethod(RunNotifier notifier) {
-        runBeforeOrAfterMigrationMethod(afterMigrationMethodToBeRun, notifier);
+        if (!isFilteredOut(afterMigrationMethodToBeRun)) {
+            runBeforeOrAfterMigrationMethod(afterMigrationMethodToBeRun, notifier);
+        }
+    }
+
+    private static boolean isFilteredOut(FrameworkMethod method) {
+        return method == null;
     }
 
     private void runBeforeOrAfterMigrationMethod(final FrameworkMethod method, RunNotifier notifier) {

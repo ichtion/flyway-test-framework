@@ -5,6 +5,9 @@ import org.junit.internal.AssumptionViolatedException;
 import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
+import org.junit.runner.manipulation.Filter;
+import org.junit.runner.manipulation.Filterable;
+import org.junit.runner.manipulation.NoTestsRemainException;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runner.notification.StoppedByUserException;
 import org.junit.runners.model.InitializationError;
@@ -12,8 +15,7 @@ import org.junit.runners.model.Statement;
 
 import java.util.List;
 
-//TODO think of cases where Filterable would be useful
-class FlywayMigrationSuiteRunner extends Runner {
+class FlywayMigrationSuiteRunner extends Runner implements Filterable {
     private final MigrationVersion migrationVersion;
     private final List<FlywayParticularMigrationTestRunner> childRunners;
     private final FlywayMigrationSuiteChildrenRunnerBuilder childrenRunnerBuilder;
@@ -81,4 +83,10 @@ class FlywayMigrationSuiteRunner extends Runner {
         }
     }
 
+    @Override
+    public void filter(Filter filter) throws NoTestsRemainException {
+        for (FlywayParticularMigrationTestRunner child : childRunners) {
+            child.filter(filter);
+        }
+    }
 }
