@@ -66,11 +66,9 @@ class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationT
 
         for (FlywayParticularMigrationTestRunner runner : childRunners) {
             statement = runner.withBefores(statement);
-        }
-
-        for (FlywayParticularMigrationTestRunner runner : childRunners) {
             statement = runner.withAfters(statement);
         }
+
         return statement;
     }
 
