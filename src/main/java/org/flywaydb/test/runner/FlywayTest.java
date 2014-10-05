@@ -6,6 +6,7 @@ import org.flywaydb.test.db.FlywayConfiguration;
 import org.junit.runners.model.TestClass;
 
 import static org.flywaydb.test.db.DbUtilities.isMigrationAvailable;
+import static org.flywaydb.test.db.FlywayConfiguration.flywayConfiguration;
 
 class FlywayTest extends TestClass {
 
@@ -17,11 +18,11 @@ class FlywayTest extends TestClass {
     public FlywayTest(Class<?> clazz) {
         super(clazz);
         FlywayMigrationTest flywayMigrationTest = clazz.getAnnotation(FlywayMigrationTest.class);
-        flywayConfiguration = FlywayConfiguration.flywayConfiguration(flywayMigrationTest.flywayConfiguration());
+        flywayConfiguration = flywayConfiguration(flywayMigrationTest.flywayConfiguration());
         String versionAsString = flywayMigrationTest.migrationVersion();
         MigrationVersion migrationVersion = MigrationVersion.fromVersion(versionAsString);
 
-        if (isMigrationAvailable(flywayConfiguration, migrationVersion)) {
+        if (!isMigrationAvailable(flywayConfiguration, migrationVersion)) {
             throw new IllegalArgumentException("There is not migration script for " + versionAsString);
         }
         this.migrationVersion = migrationVersion;

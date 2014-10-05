@@ -2,6 +2,9 @@ package org.flywaydb.test.runner;
 
 import org.flywaydb.test.annotation.AfterMigration;
 import org.flywaydb.test.annotation.BeforeMigration;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -23,6 +26,8 @@ import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.runner.Description.createTestDescription;
@@ -36,8 +41,41 @@ class FlywayParticularMigrationTestRunner implements Filterable {
 
     FlywayParticularMigrationTestRunner(FlywayTest flywayTest) throws InitializationError {
         this.flywayTest = flywayTest;
+        validate();
         beforeMigrationMethodToBeRun = (flywayTest.getAnnotatedMethods(BeforeMigration.class).get(0));
         afterMigrationMethodToBeRun = (flywayTest.getAnnotatedMethods(AfterMigration.class).get(0));
+    }
+
+    private void validate() throws InitializationError {
+        List<Throwable> errors = new ArrayList<Throwable>();
+        validateMethods(errors);
+        if (!errors.isEmpty()) {
+            throw new InitializationError(errors);
+        }
+    }
+
+    private void validateMethods(List<Throwable> errors) {
+        validateExactlyOnePublicVoidNoArgMethod(BeforeMigration.class, errors);
+        validateExactlyOnePublicVoidNoArgMethod(AfterMigration.class, errors);
+        validateNoMethod(Test.class, errors);
+        validateNoMethod(BeforeClass.class, errors);
+        validateNoMethod(AfterClass.class, errors);
+    }
+
+    private void validateExactlyOnePublicVoidNoArgMethod(Class<? extends Annotation> annotation, List<Throwable> errors) {
+        List<FrameworkMethod> annotatedMethods = flywayTest.getAnnotatedMethods(annotation);
+        if (annotatedMethods.size() > 1) {
+            errors.add(new Exception("There should not be more than one method annotated with @" + annotation.getSimpleName()));
+        }
+        annotatedMethods.get(0).validatePublicVoidNoArg(false, errors);
+    }
+
+    private void validateNoMethod(Class<? extends Annotation> notApplicableAnnotation, List<Throwable> errors) {
+        List<FrameworkMethod> annotatedMethods = flywayTest.getAnnotatedMethods(notApplicableAnnotation);
+
+        if (!annotatedMethods.isEmpty()) {
+            errors.add(new Exception("Migration test should not have any method annotated with @" + notApplicableAnnotation.getSimpleName()));
+        }
     }
 
     public Description getDescription() {
