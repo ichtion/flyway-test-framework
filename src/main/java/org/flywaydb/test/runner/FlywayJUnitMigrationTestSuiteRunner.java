@@ -7,6 +7,7 @@ import org.flywaydb.test.annotation.FlywayMigrationTest;
 import org.flywaydb.test.annotation.FlywayMigrationTestSuite;
 import org.flywaydb.test.db.DbMigrator;
 import org.flywaydb.test.db.FlywayConfiguration;
+import org.flywaydb.test.util.SortedSetMultiMap;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
@@ -26,22 +27,30 @@ import static org.flywaydb.test.db.FlywayConfiguration.flywayConfiguration;
 public class FlywayJUnitMigrationTestSuiteRunner extends ParentRunner<Runner> {
     private List<Runner> children;
 
+    //TODO move db cleaning part rather to test execution
     public FlywayJUnitMigrationTestSuiteRunner(Class<?> suiteClass) throws InitializationError {
         super(suiteClass);
         cleanDbIfNeeded(suiteClass);
         children = createChildren(testClassesSortedByMigrationVersion(suiteClass));
     }
 
-    //TODO look for some collection that would do the 'sophisticated' logic
-    private SortedMap<MigrationVersion, Set<Class<?>>> testClassesSortedByMigrationVersion(Class<?> clazz) {
-        SortedMap<MigrationVersion, Set<Class<?>>> testClassesPerVersion = new TreeMap<MigrationVersion, Set<Class<?>>>();
+    private static void cleanDbIfNeeded(Class<?> clazz) {
+        FlywayMigrationTestSuite flywayMigrationTestSuite = clazz.getAnnotation(FlywayMigrationTestSuite.class);
+
+        if (flywayMigrationTestSuite.cleanDb()) {
+            cleanDataBase(flywayConfiguration(flywayMigrationTestSuite.flywayConfiguration()));
+        }
+    }
+
+    private static SortedSetMultiMap<MigrationVersion, Class<?>> testClassesSortedByMigrationVersion(Class<?> clazz) {
+        SortedSetMultiMap<MigrationVersion, Class<?>> testClassesPerVersion = new SortedSetMultiMap<MigrationVersion, Class<?>>();
         for (Class flywayTestClass : getFlywayTestClass(clazz)) {
-            addTestClassPerMigrationVersion(testClassesPerVersion, flywayTestClass);
+            testClassesPerVersion.put(migrationVersionFrom(flywayTestClass), flywayTestClass);
         }
         return testClassesPerVersion;
     }
 
-    private List<Runner> createChildren(SortedMap<MigrationVersion, Set<Class<?>>> testClassesPerVersion) throws InitializationError {
+    private static List<Runner> createChildren(SortedSetMultiMap<MigrationVersion, Class<?>> testClassesPerVersion) throws InitializationError {
         List<Runner> childRunners = new ArrayList<Runner>();
 
         for (MigrationVersion migrationVersion : testClassesPerVersion.keySet()) {
@@ -53,25 +62,17 @@ public class FlywayJUnitMigrationTestSuiteRunner extends ParentRunner<Runner> {
         return childRunners;
     }
 
-    private void cleanDbIfNeeded(Class<?> clazz) {
-        FlywayMigrationTestSuite flywayMigrationTestSuite = clazz.getAnnotation(FlywayMigrationTestSuite.class);
-
-        if (flywayMigrationTestSuite.cleanDb()) {
-            cleanDataBase(flywayConfiguration(flywayMigrationTestSuite.flywayConfiguration()));
-        }
-    }
-
-    private void cleanDataBase(FlywayConfiguration flywayConfiguration) {
+    private static void cleanDataBase(FlywayConfiguration flywayConfiguration) {
         DbMigrator dbMigrator = dbMigratorProvider().provideDbMigratorForConfiguration(flywayConfiguration);
         dbMigrator.cleanDb();
     }
 
-    private Set<Class> getFlywayTestClass(Class<?> clazz) {
+    private static Set<Class> getFlywayTestClass(Class<?> clazz) {
         FlywayMigrationTestSuite flywayMigrationTestSuite = clazz.getAnnotation(FlywayMigrationTestSuite.class);
         return classesFromSuite(flywayMigrationTestSuite);
     }
 
-    private Set<Class> classesFromSuite(FlywayMigrationTestSuite flywayMigrationTestSuite) {
+    private static Set<Class> classesFromSuite(FlywayMigrationTestSuite flywayMigrationTestSuite) {
         Set<Class> classes = new HashSet<Class>();
 
         for (String packageWithFlywayTests : flywayMigrationTestSuite.packages()) {
@@ -82,31 +83,8 @@ public class FlywayJUnitMigrationTestSuiteRunner extends ParentRunner<Runner> {
         return classes;
     }
 
-    private void addTestClassPerMigrationVersion(SortedMap<MigrationVersion, Set<Class<?>>> testClassesPerVersion, Class<?> flywayTestClass) {
-        MigrationVersion migrationVersion = getMigrationVersion(flywayTestClass);
-        if (thereAreNoMigrationTestsForGivenMigrationVersion(testClassesPerVersion, migrationVersion)) {
-            addNewSetWithMigrationTestClass(testClassesPerVersion, flywayTestClass, migrationVersion);
-        } else {
-            addAnotherFlywayMigrationTestClass(testClassesPerVersion, flywayTestClass, migrationVersion);
-        }
-    }
-
-    private MigrationVersion getMigrationVersion(Class<?> flywayTestClass) {
+    private static MigrationVersion migrationVersionFrom(Class<?> flywayTestClass) {
         return MigrationVersion.fromVersion(flywayTestClass.getAnnotation(FlywayMigrationTest.class).migrationVersion());
-    }
-
-    private boolean thereAreNoMigrationTestsForGivenMigrationVersion(SortedMap<MigrationVersion, Set<Class<?>>> testClassesPerVersion, MigrationVersion migrationVersion) {
-        return testClassesPerVersion.get(migrationVersion) == null;
-    }
-
-    private void addAnotherFlywayMigrationTestClass(SortedMap<MigrationVersion, Set<Class<?>>> testClassesPerVersion, Class<?> flywayTestClass, MigrationVersion migrationVersion) {
-        testClassesPerVersion.get(migrationVersion).add(flywayTestClass);
-    }
-
-    private void addNewSetWithMigrationTestClass(SortedMap<MigrationVersion, Set<Class<?>>> testClassesPerVersion, Class<?> flywayTestClass, MigrationVersion migrationVersion) {
-        Set<Class<?>> tests = new HashSet<Class<?>>();
-        tests.add(flywayTestClass);
-        testClassesPerVersion.put(migrationVersion, tests);
     }
 
     @Override
@@ -141,7 +119,6 @@ public class FlywayJUnitMigrationTestSuiteRunner extends ParentRunner<Runner> {
         validateMethods(errors);
     }
 
-    //TODO think if there should be any method at all
     private void validateMethods(List<Throwable> errors) {
         validateNoMethod(Test.class, errors);
         validateNoMethod(BeforeMigration.class, errors);
