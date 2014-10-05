@@ -4,21 +4,21 @@ import org.flywaydb.core.api.MigrationVersion;
 import org.junit.internal.AssumptionViolatedException;
 import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
+import org.junit.runner.Runner;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runner.notification.StoppedByUserException;
-import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
 import java.util.List;
 
-class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationTestRunner> {
+//TODO think of cases where Filterable would be useful
+class FlywayMigrationSuiteRunner extends Runner {
     private final MigrationVersion migrationVersion;
     private final List<FlywayParticularMigrationTestRunner> childRunners;
     private final FlywayMigrationSuiteChildrenRunnerBuilder childrenRunnerBuilder;
 
     public FlywayMigrationSuiteRunner(SuiteForMigrationVersion suiteForMigrationVersion) throws InitializationError {
-        super(suiteForMigrationVersion.getClass());
         this.migrationVersion = suiteForMigrationVersion.getMigrationVersion();
         childrenRunnerBuilder = new FlywayMigrationSuiteChildrenRunnerBuilder();
         childRunners = getChildRunners(suiteForMigrationVersion);
@@ -28,30 +28,24 @@ class FlywayMigrationSuiteRunner extends ParentRunner<FlywayParticularMigrationT
         return childrenRunnerBuilder.buildChildrenRunnersForSuite(suiteForMigrationVersion);
     }
 
-    @Override
-    protected List<FlywayParticularMigrationTestRunner> getChildren() {
-        return childRunners;
-    }
-
-    @Override
-    protected String getName() {
+    private String getName() {
         return "v" + migrationVersion.getVersion().replace(".", "_");
     }
 
-    @Override
     protected Description describeChild(FlywayParticularMigrationTestRunner child) {
         return child.getDescription();
     }
 
-    //TODO detach from parent runner if it does not provide value, this empty method proves that solution is not consistent
     @Override
-    protected void runChild(FlywayParticularMigrationTestRunner child, RunNotifier notifier) {
-
+    public Description getDescription() {
+        Description description = Description.createSuiteDescription(getName());
+        for (FlywayParticularMigrationTestRunner child : childRunners) {
+            description.addChild(describeChild(child));
+        }
+        return description;
     }
 
-    @Override
-    //TODO improve
-    protected Statement classBlock(final RunNotifier notifier) {
+    private Statement classBlock(final RunNotifier notifier) {
         Statement statement = new Statement() {
             @Override
             public void evaluate() throws Throwable {
