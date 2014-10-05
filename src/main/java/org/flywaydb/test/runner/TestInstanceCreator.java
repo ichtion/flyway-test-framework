@@ -7,6 +7,8 @@ import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import static org.flywaydb.test.db.DbUtilities.getDataSource;
+
 class TestInstanceCreator {
     public static Object createInstanceOf(FlywayTest flywayTest) {
         Object testInstance = getBareInstance(flywayTest);
@@ -40,7 +42,7 @@ class TestInstanceCreator {
     }
 
     private static DataSource aDataSource(FlywayTest testClass) {
-        return testClass.getDbMigrator().getDataSource();
+        return getDataSource(testClass.getFlywayConfiguration());
     }
 
 }

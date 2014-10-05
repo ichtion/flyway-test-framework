@@ -5,8 +5,6 @@ import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.test.annotation.AfterMigration;
 import org.flywaydb.test.annotation.BeforeMigration;
 import org.flywaydb.test.annotation.FlywayMigrationTest;
-import org.flywaydb.test.db.DbMigrator;
-import org.flywaydb.test.db.FlywayConfiguration;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -22,7 +20,7 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.flywaydb.test.db.DbMigratorProvider.dbMigratorProvider;
+import static org.flywaydb.test.db.DbUtilities.cleanDb;
 import static org.flywaydb.test.db.FlywayConfiguration.flywayConfiguration;
 
 public class FlywayJUnitMigrationTestRunner extends ParentRunner<Runner> {
@@ -40,11 +38,6 @@ public class FlywayJUnitMigrationTestRunner extends ParentRunner<Runner> {
                 getMigrationVersion(clazz), ImmutableSet.<Class<?>>of(clazz));
 
         children.add(new FlywayMigrationSuiteRunner(suiteForMigrationVersion));
-    }
-
-    private void cleanDataBase(FlywayConfiguration flywayConfiguration) {
-        DbMigrator dbMigrator = dbMigratorProvider().provideDbMigratorForConfiguration(flywayConfiguration);
-        dbMigrator.cleanDb();
     }
 
     private MigrationVersion getMigrationVersion(Class<?> flywayTestClass) {
@@ -66,7 +59,7 @@ public class FlywayJUnitMigrationTestRunner extends ParentRunner<Runner> {
         FlywayMigrationTest flywayMigrationTest = getTestClass().getJavaClass().getAnnotation(FlywayMigrationTest.class);
 
         if (flywayMigrationTest.cleanDb()) {
-            cleanDataBase(flywayConfiguration(flywayMigrationTest.flywayConfiguration()));
+            cleanDb(flywayConfiguration(flywayMigrationTest.flywayConfiguration()));
         }
     }
 

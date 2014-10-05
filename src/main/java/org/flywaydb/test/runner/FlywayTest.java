@@ -3,31 +3,28 @@ package org.flywaydb.test.runner;
 import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.test.annotation.FlywayMigrationTest;
 import org.flywaydb.test.db.FlywayConfiguration;
-import org.flywaydb.test.db.DbMigrator;
 import org.junit.runners.model.TestClass;
 
-import static org.flywaydb.test.db.DbMigratorProvider.dbMigratorProvider;
+import static org.flywaydb.test.db.DbUtilities.isMigrationAvailable;
 
 class FlywayTest extends TestClass {
 
     private final MigrationVersion migrationVersion;
-    private final DbMigrator dbMigrator;
+    private final FlywayConfiguration flywayConfiguration;
     private final String name;
     private final Class<?> underlyingClass;
 
     public FlywayTest(Class<?> clazz) {
         super(clazz);
         FlywayMigrationTest flywayMigrationTest = clazz.getAnnotation(FlywayMigrationTest.class);
-        FlywayConfiguration dataBaseConfiguration = FlywayConfiguration.flywayConfiguration(flywayMigrationTest.flywayConfiguration());
+        flywayConfiguration = FlywayConfiguration.flywayConfiguration(flywayMigrationTest.flywayConfiguration());
         String versionAsString = flywayMigrationTest.migrationVersion();
         MigrationVersion migrationVersion = MigrationVersion.fromVersion(versionAsString);
 
-        DbMigrator dbMigrator = dbMigratorProvider().provideDbMigratorForConfiguration(dataBaseConfiguration);
-        if (!dbMigrator.hasMigration(migrationVersion)) {
-            throw new IllegalArgumentException("not existing migration " + versionAsString);
+        if (isMigrationAvailable(flywayConfiguration, migrationVersion)) {
+            throw new IllegalArgumentException("There is not migration script for " + versionAsString);
         }
         this.migrationVersion = migrationVersion;
-        this.dbMigrator = dbMigrator;
         this.name = clazz.getSimpleName();
         this.underlyingClass = clazz;
     }
@@ -36,8 +33,8 @@ class FlywayTest extends TestClass {
         return migrationVersion;
     }
 
-    public DbMigrator getDbMigrator() {
-        return dbMigrator;
+    public FlywayConfiguration getFlywayConfiguration() {
+        return flywayConfiguration;
     }
 
     public String getName() {

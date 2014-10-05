@@ -7,22 +7,12 @@ import org.flywaydb.core.api.MigrationVersion;
 
 import javax.sql.DataSource;
 
-public class DbMigrator {
+class DbMigrator {
 
-    private static DbMigrator migrator;
     private MigrationVersion currentMigrationVersion;
-
     private Flyway flyway;
 
-    public static DbMigrator dbMigratorForConfiguration(FlywayConfiguration flywayConfiguration) {
-        if (null != migrator) {
-            return migrator;
-        }
-        migrator = new DbMigrator(flywayConfiguration);
-        return migrator;
-    }
-
-    private DbMigrator(FlywayConfiguration flywayConfiguration) {
+    public DbMigrator(FlywayConfiguration flywayConfiguration) {
         flyway = new Flyway();
         flyway.configure(flywayConfiguration);
         currentMigrationVersion = computeCurrentVersion();
@@ -48,7 +38,7 @@ public class DbMigrator {
         return migrateTo(desiredMigrationVersion);
     }
 
-    private synchronized boolean migrateTo(MigrationVersion desiredMigrationVersion) {
+    private boolean migrateTo(MigrationVersion desiredMigrationVersion) {
         if (currentMigrationVersion.equals(desiredMigrationVersion)) {
             return true;
         }

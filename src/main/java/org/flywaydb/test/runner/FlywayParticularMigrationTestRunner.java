@@ -145,7 +145,7 @@ class FlywayParticularMigrationTestRunner implements Filterable {
         List<TestRule> result = flywayTest.getAnnotatedMethodValues(target, Rule.class, TestRule.class);
 
         result.addAll(flywayTest.getAnnotatedFieldValues(target, Rule.class, TestRule.class));
-        result.add(new MigrateToVersionRule(flywayTest.getMigrationVersion(), flywayTest.getDbMigrator()));
+        result.add(new MigrateToVersionRule(flywayTest.getMigrationVersion(), flywayTest.getFlywayConfiguration()));
 
         return result;
     }
