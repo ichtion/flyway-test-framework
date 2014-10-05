@@ -27,19 +27,9 @@ import static org.flywaydb.test.db.FlywayConfiguration.flywayConfiguration;
 public class FlywayJUnitMigrationTestSuiteRunner extends ParentRunner<Runner> {
     private List<Runner> children;
 
-    //TODO move db cleaning part rather to test execution
     public FlywayJUnitMigrationTestSuiteRunner(Class<?> suiteClass) throws InitializationError {
         super(suiteClass);
-        cleanDbIfNeeded(suiteClass);
         children = createChildren(testClassesSortedByMigrationVersion(suiteClass));
-    }
-
-    private static void cleanDbIfNeeded(Class<?> clazz) {
-        FlywayMigrationTestSuite flywayMigrationTestSuite = clazz.getAnnotation(FlywayMigrationTestSuite.class);
-
-        if (flywayMigrationTestSuite.cleanDb()) {
-            cleanDataBase(flywayConfiguration(flywayMigrationTestSuite.flywayConfiguration()));
-        }
     }
 
     private static SortedSetMultiMap<MigrationVersion, Class<?>> testClassesSortedByMigrationVersion(Class<?> clazz) {
@@ -88,9 +78,24 @@ public class FlywayJUnitMigrationTestSuiteRunner extends ParentRunner<Runner> {
     }
 
     @Override
-    protected Statement classBlock(RunNotifier notifier) {
-        return childrenInvoker(notifier);
+    protected Statement classBlock(final RunNotifier notifier) {
+        return new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                cleanDbIfNeeded();
+                childrenInvoker(notifier).evaluate();
+            }
+        };
     }
+
+    private void cleanDbIfNeeded() {
+        FlywayMigrationTestSuite flywayMigrationTestSuite = getTestClass().getJavaClass().getAnnotation(FlywayMigrationTestSuite.class);
+
+        if (flywayMigrationTestSuite.cleanDb()) {
+            cleanDataBase(flywayConfiguration(flywayMigrationTestSuite.flywayConfiguration()));
+        }
+    }
+
 
     @Override
     protected String getName() {

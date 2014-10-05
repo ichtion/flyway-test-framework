@@ -30,7 +30,6 @@ public class FlywayJUnitMigrationTestRunner extends ParentRunner<Runner> {
 
     public FlywayJUnitMigrationTestRunner(Class<?> clazz) throws InitializationError {
         super(clazz);
-        cleanDbIfNeeded(clazz);
         setChildren(clazz);
     }
 
@@ -43,14 +42,6 @@ public class FlywayJUnitMigrationTestRunner extends ParentRunner<Runner> {
         children.add(new FlywayMigrationSuiteRunner(suiteForMigrationVersion));
     }
 
-    private void cleanDbIfNeeded(Class<?> clazz) {
-        FlywayMigrationTest flywayMigrationTest = clazz.getAnnotation(FlywayMigrationTest.class);
-
-        if (null != flywayMigrationTest && flywayMigrationTest.cleanDb()) {
-            cleanDataBase(flywayConfiguration(flywayMigrationTest.flywayConfiguration()));
-        }
-    }
-
     private void cleanDataBase(FlywayConfiguration flywayConfiguration) {
         DbMigrator dbMigrator = dbMigratorProvider().provideDbMigratorForConfiguration(flywayConfiguration);
         dbMigrator.cleanDb();
@@ -61,8 +52,22 @@ public class FlywayJUnitMigrationTestRunner extends ParentRunner<Runner> {
     }
 
     @Override
-    protected Statement classBlock(RunNotifier notifier) {
-        return childrenInvoker(notifier);
+    protected Statement classBlock(final RunNotifier notifier) {
+        return new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                cleanDbIfNeeded();
+                childrenInvoker(notifier).evaluate();
+            }
+        };
+    }
+
+    private void cleanDbIfNeeded() {
+        FlywayMigrationTest flywayMigrationTest = getTestClass().getJavaClass().getAnnotation(FlywayMigrationTest.class);
+
+        if (flywayMigrationTest.cleanDb()) {
+            cleanDataBase(flywayConfiguration(flywayMigrationTest.flywayConfiguration()));
+        }
     }
 
     @Override
