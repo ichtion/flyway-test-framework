@@ -1,5 +1,6 @@
 package org.flywaydb.test;
 
+import org.flywaydb.AbstractFlywayMigrationTest;
 import org.flywaydb.test.annotation.AfterMigration;
 import org.flywaydb.test.annotation.BeforeMigration;
 import org.flywaydb.test.annotation.FlywayMigrationTest;

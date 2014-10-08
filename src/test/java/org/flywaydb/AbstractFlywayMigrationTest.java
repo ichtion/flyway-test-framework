@@ -1,4 +1,4 @@
-package org.flywaydb.test;
+package org.flywaydb;
 
 import org.junit.Before;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
