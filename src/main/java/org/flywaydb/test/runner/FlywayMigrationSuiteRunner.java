@@ -18,11 +18,11 @@ import java.util.List;
 class FlywayMigrationSuiteRunner extends Runner implements Filterable {
     private final MigrationVersion migrationVersion;
     private final List<FlywayParticularMigrationTestRunner> childRunners;
-    private final FlywayMigrationSuiteChildrenRunnerBuilder childrenRunnerBuilder;
+    private final FlywayMigrationSuiteChildrenRunnerFactory childrenRunnerBuilder;
 
     public FlywayMigrationSuiteRunner(SuiteForMigrationVersion suiteForMigrationVersion) throws InitializationError {
         this.migrationVersion = suiteForMigrationVersion.getMigrationVersion();
-        childrenRunnerBuilder = new FlywayMigrationSuiteChildrenRunnerBuilder();
+        childrenRunnerBuilder = new FlywayMigrationSuiteChildrenRunnerFactory();
         childRunners = getChildRunners(suiteForMigrationVersion);
     }
 

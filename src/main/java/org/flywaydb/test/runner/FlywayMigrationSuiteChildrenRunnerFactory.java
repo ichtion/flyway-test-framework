@@ -9,7 +9,7 @@ import java.util.concurrent.CountDownLatch;
 
 import static org.flywaydb.test.runner.TestInstanceCreator.createInstanceOf;
 
-class FlywayMigrationSuiteChildrenRunnerBuilder {
+class FlywayMigrationSuiteChildrenRunnerFactory {
     public List<FlywayParticularMigrationTestRunner> buildChildrenRunnersForSuite(SuiteForMigrationVersion suite) throws InitializationError {
         List<FlywayParticularMigrationTestRunner> childRunners = new ArrayList<FlywayParticularMigrationTestRunner>();
         Set<Class<?>> suiteForMigrationVersionClasses = suite.getClasses();
