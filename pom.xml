@@ -7,9 +7,24 @@
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <name>Flyway Test Framework</name>
+    <description>Framework for automating testing of migrations based on Flyway</description>
+    <url>https://github.com/ichtion/flyway-test-framework</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/ichtion/flyway-test-framework</url>
+    </scm>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring.version>4.0.6.RELEASE</spring.version>
     </properties>
 
     <dependencies>
@@ -18,7 +33,6 @@
             <artifactId>reflections</artifactId>
             <version>0.9.9-RC1</version>
         </dependency>
-
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
@@ -34,16 +48,12 @@
             <artifactId>javax.inject</artifactId>
             <version>1</version>
         </dependency>
+
         <!-- test -->
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>1.6.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>17.0</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
@@ -60,19 +70,14 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-            <version>${spring.version}</version>
+            <version>4.0.6.RELEASE</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>${spring.version}</version>
+            <version>4.0.6.RELEASE</version>
+            <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.jayway.awaitility</groupId>
-            <artifactId>awaitility</artifactId>
-            <version>1.6.0</version>
-        </dependency>
-
     </dependencies>
 </project>
