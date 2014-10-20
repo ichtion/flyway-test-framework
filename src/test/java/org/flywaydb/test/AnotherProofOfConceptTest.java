@@ -20,21 +20,13 @@ public class AnotherProofOfConceptTest extends AbstractFlywayMigrationTest {
 
     @BeforeMigration
     public void insertEmployee() {
-        TestUtils.sleepRandomTime();
-
         jdbcTemplate.update("insert into employee (id, name) values(:id, :name)", of("id", ID, "name", NAME));
     }
 
     @AfterMigration
     public void assertNameColumnWasRenamedToFirstName() {
-        TestUtils.sleepRandomTime();
-
         String firstname = jdbcTemplate.queryForObject("select firstname from employee where id=:id", of("id", ID), String.class);
 
         assertThat(firstname).isEqualTo(NAME);
-    }
-
-    public AnotherProofOfConceptTest() {
-        System.out.println("Constructor for " + this.getClass().getSimpleName());
     }
 }

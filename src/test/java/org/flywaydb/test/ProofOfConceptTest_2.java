@@ -19,10 +19,8 @@ import static org.flywaydb.util.TestUtils.id;
 @RunWith(FlywayJUnitMigrationTestRunner.class)
 @FlywayMigrationTest(cleanDb = true, migrationVersion = "2_1", flywayConfiguration = "/flyway.properties")
 public class ProofOfConceptTest_2 {
-    @Inject
-    private DataSource dataSource;
-    protected NamedParameterJdbcTemplate jdbcTemplate;
-
+    @Inject private DataSource dataSource;
+    private NamedParameterJdbcTemplate jdbcTemplate;
 
     private static final String ID = id();
     private static final String NAME = "name";
@@ -34,21 +32,13 @@ public class ProofOfConceptTest_2 {
 
     @BeforeMigration
     public void insertEmployee() {
-        TestUtils.sleepRandomTime();
-
         jdbcTemplate.update("insert into employee (id, firstname) values(:id, :name)", of("id", ID, "name", NAME));
     }
 
     @AfterMigration
     public void assertNameColumnWasRenamedToFirstname() {
-        TestUtils.sleepRandomTime();
-
         String mainName = jdbcTemplate.queryForObject("select mainname from employee where id=:id", of("id", ID), String.class);
 
         assertThat(mainName).isEqualTo(NAME);
-    }
-
-    public ProofOfConceptTest_2() {
-        System.out.println("Constructor for " + this.getClass().getSimpleName());
     }
 }
