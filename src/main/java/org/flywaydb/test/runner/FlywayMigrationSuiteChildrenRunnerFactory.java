@@ -26,7 +26,7 @@ class FlywayMigrationSuiteChildrenRunnerFactory {
         return childRunners;
     }
 
-    private void injectDependencies(FlywayParticularMigrationTestRunner flywayParticularMigrationTestRunner, FlywayTest flywayTest) {
+    private void injectDependencies(FlywayParticularMigrationTestRunner flywayParticularMigrationTestRunner, FlywayTest flywayTest) throws InitializationError {
         flywayParticularMigrationTestRunner.setTestInstance(createInstanceOf(flywayTest));
     }
 }

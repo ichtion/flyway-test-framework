@@ -1,28 +1,41 @@
 package org.flywaydb.test.runner;
 
 import org.junit.runners.model.FrameworkField;
+import org.junit.runners.model.InitializationError;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.flywaydb.test.db.DbUtilities.getDataSource;
 
 class TestInstanceCreator {
-    public static Object createInstanceOf(FlywayTest flywayTest) {
+    public static Object createInstanceOf(FlywayTest flywayTest) throws InitializationError {
         Object testInstance = getBareInstance(flywayTest);
-        List<FrameworkField> annotatedFields = flywayTest.getAnnotatedFields(Inject.class);
-        for (FrameworkField annotatedField : annotatedFields) {
-            if (annotatedField.getType().equals(DataSource.class)) {
-                Field field = annotatedField.getField();
-                field.setAccessible(true);
-                setDataSource(flywayTest, testInstance, field);
-            } else {
-                throw new UnsupportedOperationException("Annotation @Inject should be used only with field of javax.sql.DataSource type");
+        FrameworkField dataSourceField = getDataSourceField(flywayTest);
+
+        Field field = dataSourceField.getField();
+        field.setAccessible(true);
+        setDataSource(flywayTest, testInstance, field);
+
+        return testInstance;
+    }
+
+    private static FrameworkField getDataSourceField(FlywayTest flywayTest) throws InitializationError {
+        List<FrameworkField> dataSourceFields = new ArrayList<FrameworkField>();
+        for (FrameworkField field : flywayTest.getAnnotatedFields(Inject.class)) {
+            if (field.getType().equals(DataSource.class)) {
+                dataSourceFields.add(field);
             }
         }
-        return testInstance;
+
+        if (dataSourceFields.size() != 1) {
+            throw new InitializationError("There should be exactly one DataSource type field annotated with @Inject");
+        }
+
+        return dataSourceFields.get(0);
     }
 
     private static void setDataSource(FlywayTest flywayTest, Object testInstance, Field field) {
